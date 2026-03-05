@@ -1,0 +1,529 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Video;
+use App\Models\Channel;
+use App\Models\Niche;
+use App\Models\ContentStructure;
+use App\Models\EmotionalTone;
+use App\Models\GeneratedTitle;
+use App\Services\Export\ExportService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Jobs\GenerateConceptsJob;
+use App\Jobs\GenerateVideoStructureJob;
+
+class ProjectController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $userId = Auth::id();
+        
+        $videos = Video::with('chapters')
+            ->where('user_id', $userId)
+            ->latest()
+            ->paginate(12);
+
+        // AI Usage for this user
+        $usageStats = DB::table('ai_usages')
+            ->where('user_id', $userId)
+            ->select([
+                DB::raw('SUM(input_tokens + output_tokens) as total_tokens'),
+                DB::raw('SUM(estimated_cost) as total_cost')
+            ])
+            ->first();
+
+        return view('videos.index', [
+            'videos' => $videos,
+            'totalTokens' => $usageStats->total_tokens ?? 0,
+            'totalCost' => $usageStats->total_cost ?? 0,
+            'totalCompleted' => Video::where('user_id', $userId)->where('status', 'completed')->count(),
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        // 1. Fetch Niches grouped by Tier
+        $niches = Niche::all()->groupBy('tier');
+        
+        // 2. Fetch Channels (Select list)
+        $channels = Channel::all();
+
+        // 3. Fetch Antigravity Layers
+        $structures = ContentStructure::all(); // Layer 2
+        $emotions = EmotionalTone::all();     // Layer 3
+
+        return view('videos.create', compact('niches', 'channels', 'structures', 'emotions'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        // 1. Validate Input
+        $validated = $request->validate([
+             'niche_id' => 'required|exists:niches,id',
+             'content_structure_id' => 'required|exists:content_structures,id', // Layer 2
+             'emotional_tone_id' => 'required|exists:emotional_tones,id',       // Layer 3
+             'channel_id' => 'nullable|exists:channels,id', // Make nullable if not selected
+             'hybrid_intensity' => 'required|integer|min:0|max:100', // e.g., 30, 50, 70
+             'risk_mode' => 'required|string', // e.g., "Safe", "Edgy"
+             'tier1_country' => 'required|string', // e.g., "US", "UK"
+             'duration_minutes' => 'required|integer|min:1|max:120',
+        ]);
+
+        // 2. Get Related Models
+        $niche = Niche::findOrFail($validated['niche_id']);
+        
+        // Default Channel if not selected (Temporary)
+        $channelId = $validated['channel_id'] ?? Channel::first()->id;
+
+        // 3. Create Video Record (Concept Phase)
+        // Store Antigravity specific configs in metadata
+        $video = Video::create([
+            'user_id' => Auth::id(),
+            'channel_id' => $channelId,
+            'niche_id' => $niche->id,
+            'content_structure_id' => $validated['content_structure_id'],
+            'emotional_tone_id' => $validated['emotional_tone_id'],
+            'topic' => $niche->name, // Niche name as starting topic
+            'niche' => $niche->name,
+            'sub_niche' => null,
+            'tier1_country' => $validated['tier1_country'],
+            'duration_minutes' => $validated['duration_minutes'],
+            'chapter_count' => 10,
+            'status' => 'pending',
+            'metadata' => [
+                'hybrid_intensity' => $validated['hybrid_intensity'],
+                'risk_mode' => $validated['risk_mode'],
+            ]
+        ]);
+
+        // Dispatch background job to generate CONCEPTS first
+        \App\Jobs\GenerateConceptsJob::dispatch($video);
+
+        return redirect()->route('projects.show', $video)
+            ->with('success', 'Project created! Generating 5 viral concepts for you to choose from...');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Video $project)
+    {
+        // Ensure user owns the project
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $project->load(['chapters.scenes', 'generatedTitles']); // Eager load relationships
+        
+        return view('videos.show', compact('project'));
+    }
+
+    /**
+     * Export project assets.
+     */
+    public function export(Video $project, ExportService $exportService)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $zipUrl = $exportService->exportAssets($project->id);
+
+        if ($zipUrl) {
+            return redirect($zipUrl);
+        }
+
+        return back()->with('error', 'Failed to generate export package.');
+    }
+    
+    /**
+     * Retry the concept generation for a failed project.
+     */
+    public function retry(Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Clear existing generated titles to avoid stale data
+        $project->generatedTitles()->delete();
+
+        $project->update([
+            'status' => 'pending',
+            'title_variations' => null
+        ]);
+
+        // Dispatch background job to re-generate CONCEPTS
+        \App\Jobs\GenerateConceptsJob::dispatch($project);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Retrying generation! Our AI is working on 5 new concepts...');
+    }
+
+    /**
+     * Select a specific concept (Title + Hook) for the project.
+     */
+    public function selectTitle(Request $request, Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+        
+        $validated = $request->validate([
+            'selected_title' => 'required|string|max:255',
+            'mega_hook' => 'nullable|string',
+        ]);
+
+        $generatedTitle = GeneratedTitle::where('video_id', $project->id)
+            ->where('title', $validated['selected_title'])
+            ->first();
+
+        $project->update([
+            'selected_title' => $validated['selected_title'],
+            'mega_hook' => $validated['mega_hook'] ?? $generatedTitle->mega_hook,
+            'thumbnail_concept' => $generatedTitle->thumbnail_concept,
+            'metadata' => array_merge($project->metadata ?? [], [
+                'concept_metadata' => $generatedTitle->metadata ?? null
+            ]),
+            'status' => 'generating_thumbnail_concept', // New intermediate state
+        ]);
+
+        // Trigger the second stage: Detailed Thumbnail Prompt Generation (13-Layer Modular Engine)
+        \App\Jobs\GenerateThumbnailPromptJob::dispatch($project);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Concept selected! Generating high-fidelity visual prompts...');
+    }
+
+    /**
+     * Select a specific strategy for the project (CreatorFlow Logic).
+     */
+    public function selectStrategy(Request $request, Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+        
+        $validated = $request->validate([
+            'strategy_index' => 'required|integer',
+        ]);
+
+        $strategies = $project->strategies;
+        if (!isset($strategies[$validated['strategy_index']])) {
+            return back()->with('error', 'Invalid concept selection.');
+        }
+
+        $selectedStrategy = $strategies[$validated['strategy_index']];
+
+        $project->update([
+            'selected_title' => $selectedStrategy['title'],
+            'mega_hook' => $selectedStrategy['megaHooks'][0] ?? null,
+            'thumbnail_concept' => $selectedStrategy['thumbnailConcepts'][0]['prompt'] ?? $selectedStrategy['thumbnailConcepts'][0]['description'] ?? null,
+            'thumbnail_visual_prompt_data' => $selectedStrategy['thumbnailConcepts'][0] ?? null,
+            'platform_data' => $selectedStrategy['platform_adaptations'] ?? null,
+            'status' => 'architecting_chapters',
+        ]);
+
+        // Dispatch Video Structure Job (One-Off Workflow)
+        \App\Jobs\GenerateVideoStructureJob::dispatch($project);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Concept selected! Architecting your cinematic video story bible and chapters...');
+    }
+
+    /**
+     * Trigger background job to regenerate a single retention hook
+     */
+    public function regenerateHook(Request $request, Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'title_id' => 'required|exists:generated_titles,id'
+        ]);
+
+        \App\Jobs\RegenerateHookJob::dispatch($project, $validated['title_id']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Hook regeneration started'
+        ]);
+    }
+
+    /**
+     * Trigger background job to regenerate a single thumbnail prompt
+     */
+    public function regenerateThumbnail(Request $request, Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'title_id' => 'required|exists:generated_titles,id'
+        ]);
+
+        \App\Jobs\RegenerateThumbnailJob::dispatch($project, $validated['title_id']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thumbnail regeneration started'
+        ]);
+    }
+
+    /**
+     * Manually trigger image generation for a thumbnail concept
+     */
+    public function generateThumbnailImage(GeneratedTitle $title)
+    {
+        if ($title->video->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        if (empty($title->thumbnail_concept)) {
+            return response()->json(['error' => 'No thumbnail concept found'], 400);
+        }
+
+        \App\Jobs\GenerateThumbnailImageJob::dispatch($title);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Image generation triggered'
+        ]);
+    }
+    /**
+     * Manually trigger image generation for a scene
+     */
+    public function generateSceneImage(\App\Models\Video $project, \App\Models\Chapter $chapter, \App\Models\Scene $scene)
+    {
+        if ($project->user_id !== Auth::id()) {
+            return back()->with('error', 'Unauthorized access.');
+        }
+
+        if (empty($scene->visual_prompt)) {
+            return back()->with('error', 'No visual prompt exists for this scene.');
+        }
+
+        // Dispatch the single image job with null provider to allow resolution
+        \App\Jobs\GenerateSingleImageJob::dispatch($scene, null);
+
+        return back()->with('status', 'Visual Generation Engine engaged for Node ' . $scene->scene_number);
+    }
+
+
+    /**
+     * Check the status of a specific scene's image generation (AJAX/Polling).
+     */
+    public function checkSceneImageStatus(\App\Models\Video $project, \App\Models\Chapter $chapter, \App\Models\Scene $scene)
+    {
+        if ($project->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'image_url' => $scene->image_url ? url($scene->image_url) : null
+        ]);
+    }
+
+    /**
+     * Persist or remove a title from saved favorites.
+     */
+    public function toggleBookmark(GeneratedTitle $title)
+    {
+        // Basic security check: title belongs to a video owned by user
+        if ($title->video->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $title->update([
+            'is_saved' => !$title->is_saved
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'is_saved' => $title->is_saved
+        ]);
+    }
+
+    /**
+     * Check the status of a specific generated title (AJAX/Polling).
+     */
+    public function checkTitleStatus(GeneratedTitle $title)
+    {
+        // Ownership check
+        if ($title->video->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'title' => $title->title,
+            'mega_hook' => $title->mega_hook,
+            'thumbnail_concept' => $title->thumbnail_concept,
+            'thumbnail_url' => $title->thumbnail_url,
+            'thumbnail_status' => $title->thumbnail_status
+        ]);
+    }
+
+    /**
+     * Display a collection of saved concepts.
+     */
+    public function bookmarks()
+    {
+        $userId = Auth::id();
+        
+        $bookmarks = GeneratedTitle::where('is_saved', true)
+            ->whereHas('video', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->with('video')
+            ->latest()
+            ->paginate(12);
+
+        return view('videos.bookmarks', compact('bookmarks'));
+    }
+
+    /**
+     * Trigger manual generation for a specific chapter.
+     */
+    public function architectChapter(\App\Models\Video $project, \App\Models\Chapter $chapter)
+    {
+        if ($project->user_id !== Auth::id() || $chapter->video_id !== $project->id) {
+            abort(403);
+        }
+
+        // Load all chapters for prompt context
+        $allChapters = $project->chapters->toArray();
+
+        // Dispatch background job for chapter narration
+        \App\Jobs\GenerateChapterNarrationJob::dispatch($project, $chapter, $allChapters);
+
+        return back()->with('success', "Architecting Chapter {$chapter->chapter_number}...");
+    }
+
+    /**
+     * Approve and lock a generated chapter.
+     */
+    public function approveChapter(\App\Models\Video $project, \App\Models\Chapter $chapter)
+    {
+        if ($project->user_id !== Auth::id() || $chapter->video_id !== $project->id) {
+            abort(403);
+        }
+
+        $chapter->update(['status' => 'approved']);
+
+        // Check if all chapters are approved to finalize the video
+        $allApproved = $project->chapters()->where('status', '!=', 'approved')->count() === 0;
+        
+        if ($allApproved) {
+            $project->update(['status' => 'completed']);
+        }
+
+        return back()->with('success', "Chapter {$chapter->chapter_number} approved and locked!");
+    }
+
+    /**
+     * Show the cinematic studio interface.
+     */
+    public function studio(Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Only allow production-ready projects in the studio
+        if (!in_array($project->status, ['approved', 'completed'])) {
+            return redirect()->route('projects.show', $project)
+                ->with('warning', 'The Studio is still generating your video architecture. Please wait for chapters to be finalized.');
+        }
+
+        $project->load(['chapters.scenes', 'niche', 'channel']);
+
+        return view('videos.studio', compact('project'));
+    }
+
+    /**
+     * Bulk save the state of the studio workshop.
+     */
+    public function saveStudioState(Request $request, Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $validated = $request->validate([
+            'chapters' => 'required|array',
+            'chapters.*.scenes' => 'required|array',
+            'chapters.*.scenes.*.id' => 'required|exists:scenes,id',
+            'chapters.*.scenes.*.narration_text' => 'nullable|string',
+            'chapters.*.scenes.*.visual_prompt' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($validated['chapters'] as $chapterData) {
+                foreach ($chapterData['scenes'] as $sceneData) {
+                    \App\Models\Scene::where('id', $sceneData['id'])
+                        ->where('video_id', $project->id) // Security check
+                        ->update([
+                            'narration_text' => $sceneData['narration_text'] ?? '',
+                            'visual_prompt' => $sceneData['visual_prompt'] ?? '',
+                        ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Show the studio landing page (index of projects for studio).
+     */
+    public function studioIndex()
+    {
+        $userId = Auth::id();
+        $videos = Video::with('chapters')
+            ->where('user_id', $userId)
+            ->whereIn('status', ['approved', 'completed']) // Only show project in active production
+            ->latest()
+            ->paginate(12);
+
+        return view('videos.studio-index', compact('videos'));
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $project->delete();
+
+        return redirect()->route('projects.index')
+            ->with('success', 'Project deleted successfully.');
+    }
+}

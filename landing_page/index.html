@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axelit StoryBee | The Antigravity AI Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --accent: #2dd4bf;
+            --accent-glow: rgba(45, 212, 191, 0.4);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            color: #f8fafc;
+        }
+
+        h1,
+        h2,
+        h3,
+        .font-heading {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .neo-border {
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.05);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #2dd4bf 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px var(--accent-glow);
+        }
+
+        .layer-card {
+            transition: all 0.4s ease;
+        }
+
+        .layer-card:hover {
+            border-color: #2dd4bf;
+            background: rgba(45, 212, 191, 0.03);
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-slow {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.1;
+            }
+        }
+
+        .glow-dot {
+            width: 8px;
+            height: 8px;
+            background: #2dd4bf;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #2dd4bf;
+        }
+    </style>
+</head>
+
+<body class="overflow-x-hidden">
+    <!-- Ambient Background -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none opacity-20 overflow-hidden">
+        <div class="absolute -top-1/4 -left-1/4 w-full h-full bg-teal-600/20 blur-[160px] animate-pulse-slow"></div>
+        <div
+            class="absolute -bottom-1/4 -right-1/4 w-full h-full bg-blue-600/20 blur-[160px] animate-pulse-slow font-delay-2000">
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="max-w-7xl mx-auto px-6 py-10 flex justify-between items-center relative z-20">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-12 h-12 glass neo-border rounded-xl flex items-center justify-center p-2 group transition-all duration-500 hover:rotate-12">
+                <svg class="w-full h-full text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-2xl font-black tracking-tight text-white leading-none">Axelit <span
+                        class="text-teal-400">StoryBee</span></span>
+                <span class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 mt-1">Antigravity AI
+                    Engine</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="#waitlist"
+                class="hidden sm:block text-xs font-black uppercase tracking-widest text-slate-400 hover:text-teal-400 transition-colors">Early
+                Access</a>
+            <a href="https://chat.whatsapp.com/YOUR_GROUP_ID"
+                class="glass neo-border px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-teal-500/10 transition-all">
+                <i data-lucide="phone" class="w-3.5 h-3.5 text-teal-400"></i> Join Group
+            </a>
+        </div>
+    </nav>
+
+    <main class="relative z-10">
+        <!-- Hero Section -->
+        <section class="max-w-7xl mx-auto px-6 py-20 lg:py-32 flex flex-col lg:flex-row items-center gap-20">
+            <div class="flex-1 text-center lg:text-left">
+                <div
+                    class="inline-flex items-center gap-3 px-4 py-2 rounded-full glass neo-border text-[10px] font-black tracking-[0.2em] text-teal-400 mb-8 uppercase">
+                    <span class="glow-dot"></span>
+                    CreatorFlow Logic v2.0 Active
+                </div>
+                <h1 class="text-6xl md:text-8xl font-black leading-[0.9] mb-8 tracking-tighter">
+                    Story <br>
+                    <span class="gradient-text">Marathons</span> <br>
+                    Redefined.
+                </h1>
+                <p class="text-xl text-slate-400 mb-12 max-w-2xl leading-relaxed mx-auto lg:mx-0">
+                    Propel your content with the <span class="text-white font-bold">Antigravity 13-Layer Engine</span>.
+                    Architecture, narration, and viral adaptation for FB & YT—all on a single modular blueprint.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
+                    <a href="#waitlist"
+                        class="btn-primary px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-2xl">
+                        Start Your Marathon
+                    </a>
+                    <div class="flex items-center gap-4 px-8 py-5 rounded-2xl glass neo-border group cursor-pointer">
+                        <div class="text-left">
+                            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">
+                                Risk Mode</p>
+                            <p class="text-sm font-bold text-white group-hover:text-teal-400 transition-colors">Edgy v
+                                Safe</p>
+                        </div>
+                        <i data-lucide="shield" class="w-5 h-5 text-teal-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 relative w-full max-w-2xl">
+                <!-- Advanced UI Mockup -->
+                <div class="w-full aspect-[4/3] glass neo-border rounded-[48px] p-4 relative animate-float">
+                    <div
+                        class="w-full h-full bg-[#0a0f1d] rounded-[36px] overflow-hidden shadow-2xl relative border border-white/5">
+                        <!-- UI Header -->
+                        <div class="h-14 border-b border-white/5 flex items-center justify-between px-8">
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-900/40"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-900/40"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-900/40"></div>
+                            </div>
+                            <div class="h-6 w-32 bg-white/5 rounded-full flex items-center justify-center">
+                                <span
+                                    class="text-[8px] font-black text-slate-500 tracking-[0.3em] uppercase">Antigravity
+                                    Console</span>
+                            </div>
+                            <div
+                                class="w-8 h-8 rounded-lg glass border border-white/10 flex items-center justify-center">
+                                <i data-lucide="user-cog" class="w-4 h-4 text-teal-400"></i>
+                            </div>
+                        </div>
+                        <!-- UI Content -->
+                        <div class="p-8 grid grid-cols-12 gap-6 h-full">
+                            <div class="col-span-8 space-y-6">
+                                <div
+                                    class="h-10 w-full bg-white/5 rounded-xl border border-white/5 flex items-center px-4 justify-between">
+                                    <span class="text-[10px] font-bold text-teal-400">PROMPT_ARCHITECT_v4</span>
+                                    <div class="flex gap-2">
+                                        <div class="h-1 w-8 bg-teal-400 rounded-full"></div>
+                                        <div class="h-1 w-8 bg-slate-700 rounded-full"></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="h-4 w-full bg-slate-800/50 rounded-lg"></div>
+                                    <div class="h-4 w-11/12 bg-slate-800/50 rounded-lg"></div>
+                                    <div class="h-4 w-4/5 bg-slate-800/50 rounded-lg"></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 pt-4">
+                                    <div
+                                        class="h-32 glass neo-border rounded-2xl flex flex-col items-center justify-center gap-3 relative overflow-hidden group">
+                                        <div
+                                            class="absolute inset-x-0 bottom-0 h-1 bg-teal-400/50 group-hover:h-full transition-all duration-700 opacity-20">
+                                        </div>
+                                        <i data-lucide="zap" class="w-8 h-8 text-teal-400"></i>
+                                        <span class="text-[10px] font-black uppercase tracking-widest">Hybrid
+                                            Intensity</span>
+                                        <span class="text-lg font-black text-white">87%</span>
+                                    </div>
+                                    <div
+                                        class="h-32 glass neo-border rounded-2xl flex flex-col items-center justify-center gap-3">
+                                        <i data-lucide="globe" class="w-8 h-8 text-blue-400"></i>
+                                        <span class="text-[10px] font-black uppercase tracking-widest">Tier 1
+                                            Strategy</span>
+                                        <span class="text-lg font-black text-white">US/UK/AU</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-span-4 space-y-4 pt-10">
+                                <div
+                                    class="h-40 w-full glass rounded-3xl border border-white/5 p-4 flex flex-col items-center gap-4">
+                                    <div class="w-16 h-1 bg-teal-400 rounded-full"></div>
+                                    <div class="flex-1 w-full space-y-2">
+                                        <div class="h-2 w-full bg-slate-800 rounded"></div>
+                                        <div class="h-2 w-4/5 bg-slate-800 rounded"></div>
+                                        <div class="h-2 w-full bg-slate-800 rounded"></div>
+                                    </div>
+                                    <div class="w-full h-8 bg-teal-500 rounded-xl"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Floatings -->
+                <div
+                    class="absolute -top-12 -right-12 w-48 h-48 glass neo-border rounded-[40px] -rotate-12 flex flex-col p-6 items-center justify-center gap-4 animate-float delay-1000">
+                    <div class="w-12 h-12 bg-teal-500/20 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="layers" class="w-7 h-7 text-teal-400"></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-black text-white leading-none">13 Layers</p>
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Modular Prompting
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Grid (The 3 Layers) -->
+        <section class="max-w-7xl mx-auto px-6 py-32 border-y border-white/5 relative overflow-hidden">
+            <div class="text-center mb-24 relative z-10">
+                <p class="text-teal-400 text-xs font-black uppercase tracking-[0.4em] mb-4">Core Methodology</p>
+                <h2 class="text-5xl font-black mb-6">The Antigravity Stack</h2>
+                <p class="text-slate-400 max-w-xl mx-auto">Engineered to bypass platform friction and content fatigue.
+                    We architect stories that are mathematically poised for virality.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 relative z-10">
+                <!-- Layer 1 -->
+                <div class="layer-card glass neo-border p-10 rounded-[48px] flex flex-col gap-6 group">
+                    <div
+                        class="w-16 h-16 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center group-hover:bg-teal-500/10 transition-colors">
+                        <i data-lucide="map-pin" class="w-8 h-8 text-teal-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Layer 01</p>
+                        <h3 class="text-2xl font-black mb-4">Tier 1 Targeting</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Deep-coded geographic strategies for US, UK,
+                            and AU audiences. We don't just post; we target the highest CPM regions by design.</p>
+                    </div>
+                    <ul class="space-y-3 mt-4">
+                        <li class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-teal-400"></i> Cultural Nuance Adaptation
+                        </li>
+                        <li class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-teal-400"></i> Localized Slang Engine
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Layer 2 -->
+                <div class="layer-card glass neo-border p-10 rounded-[48px] flex flex-col gap-6 group">
+                    <div
+                        class="w-16 h-16 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center group-hover:bg-blue-500/10 transition-colors">
+                        <i data-lucide="layout-template" class="w-8 h-8 text-blue-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Layer 02</p>
+                        <h3 class="text-2xl font-black mb-4">Story Architecting</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Choose from complex content structures:
+                            Linear, Mystery-First, or Viral-Hook patterns. Built into the Story Marathon workflow.</p>
+                    </div>
+                    <ul class="space-y-3 mt-4">
+                        <li class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-blue-400"></i> 10-Chapter Story Bibles
+                        </li>
+                        <li class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-blue-400"></i> Automated Scene Continuity
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Layer 3 -->
+                <div class="layer-card glass neo-border p-10 rounded-[48px] flex flex-col gap-6 group">
+                    <div
+                        class="w-16 h-16 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center group-hover:bg-teal-500/10 transition-colors">
+                        <i data-lucide="frown" class="w-8 h-8 text-teal-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Layer 03</p>
+                        <h3 class="text-2xl font-black mb-4">Emotional Tone</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Map your emotional spikes. From Melancholic to
+                            High-Energy Thrillers, the engine adapts every punctuation mark for impact.</p>
+                    </div>
+                    <ul class="space-y-3 mt-4">
+                        <li class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-teal-400"></i> Narrative Spike Mapping
+                        </li>
+                        <li class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-teal-400"></i> Persona Personality Pool
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- The 13-Layer Engine Explainer -->
+        <section class="max-w-7xl mx-auto px-6 py-32 bg-[#020617] relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent"></div>
+            <div class="flex flex-col lg:flex-row items-center gap-20 relative z-10">
+                <div class="flex-1 space-y-8">
+                    <h2 class="text-5xl font-black leading-tight">The 13-Layer Modular <span
+                            class="text-teal-400">Prompting Engine.</span></h2>
+                    <p class="text-lg text-slate-400 leading-relaxed">
+                        Every thumbnail concept, script chapter, and story hook is passed through 13 layers of AI
+                        refinement. We analyze depth, contrast, saturation, hook intensity, and platform policy before
+                        you even see the output.
+                    </p>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                                <i data-lucide="monitor" class="w-5 h-5 text-teal-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-1 uppercase tracking-tighter">FB/YT Adaptation</h4>
+                                <p class="text-xs text-slate-500">Cross-platform optimization baked in.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                                <i data-lucide="hard-drive" class="w-5 h-5 text-blue-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-1 uppercase tracking-tighter">Asset Export</h4>
+                                <p class="text-xs text-slate-500">Full ZIP bundles of scripts and prompts.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-1 lg:pl-10">
+                    <div class="space-y-4">
+                        <div class="glass neo-border p-4 rounded-2xl flex items-center gap-4 animate-float">
+                            <span
+                                class="w-8 h-8 rounded-full bg-teal-400 text-black font-black flex items-center justify-center text-[10px]">01</span>
+                            <span class="text-sm font-bold tracking-tight">Concept Generation Phase</span>
+                            <div class="ml-auto w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div class="w-full h-full bg-teal-400"></div>
+                            </div>
+                        </div>
+                        <div
+                            class="glass neo-border p-4 rounded-2xl flex items-center gap-4 animate-float delay-300 opacity-80">
+                            <span
+                                class="w-8 h-8 rounded-full border border-teal-500/30 text-teal-400 font-black flex items-center justify-center text-[10px]">02</span>
+                            <span class="text-sm font-bold tracking-tight">Strategy Node Selection (Viral Pack)</span>
+                            <div class="ml-auto w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div class="w-1/2 h-full bg-teal-400"></div>
+                            </div>
+                        </div>
+                        <div
+                            class="glass neo-border p-4 rounded-2xl flex items-center gap-4 animate-float delay-500 opacity-60">
+                            <span
+                                class="w-8 h-8 rounded-full border border-teal-500/30 text-teal-400 font-black flex items-center justify-center text-[10px]">03</span>
+                            <span class="text-sm font-bold tracking-tight">13-Layer Modular Prompting</span>
+                            <div class="ml-auto w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div class="w-1/4 h-full bg-teal-400"></div>
+                            </div>
+                        </div>
+                        <div
+                            class="glass neo-border p-4 rounded-2xl flex items-center gap-4 animate-float delay-700 opacity-40">
+                            <span
+                                class="w-8 h-8 rounded-full border border-teal-500/30 text-teal-400 font-black flex items-center justify-center text-[10px]">04</span>
+                            <span class="text-sm font-bold tracking-tight">Full Story Bible Finalization</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Waitlist Section -->
+        <section id="waitlist" class="max-w-4xl mx-auto px-6 py-32 relative">
+            <div class="absolute inset-0 bg-teal-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+            <div class="glass p-12 md:p-24 rounded-[64px] text-center border-teal-500/40 relative z-10 overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-64 h-64 bg-teal-500/10 blur-[80px] -mr-32 -mb-32"></div>
+
+                <h2 class="text-5xl font-black mb-6 tracking-tighter">Join the <br><span
+                        class="gradient-text">CreatorFlow</span> Inner Circle</h2>
+                <p class="text-slate-400 mb-12 text-lg">Secure your spot for the next generation of AI-driven marathons.
+                    Early testers receive 6 months of <span class="text-white font-bold">Antigravity Premium</span>
+                    access.</p>
+
+                <form id="waitlistForm" class="space-y-6 max-w-xl mx-auto">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <input type="text" id="userName" placeholder="Full Name" required
+                            class="flex-1 bg-[#0a0f1d] border border-white/10 rounded-3xl px-8 py-5 outline-none focus:border-teal-400 transition-all font-bold text-white">
+                        <input type="email" id="userEmail" placeholder="Work Email" required
+                            class="flex-1 bg-[#0a0f1d] border border-white/10 rounded-3xl px-8 py-5 outline-none focus:border-teal-400 transition-all font-bold text-white">
+                    </div>
+                    <select id="platformPreference"
+                        class="w-full bg-[#0a0f1d] border border-white/10 rounded-3xl px-8 py-5 outline-none focus:border-teal-400 transition-all font-bold text-white appearance-none cursor-pointer">
+                        <option value="Both" class="bg-[#030712]">Focus: Both FB & YT Growth</option>
+                        <option value="FB" class="bg-[#030712]">Focus: Facebook Communities</option>
+                        <option value="YT" class="bg-[#030712]">Focus: YouTube Automation</option>
+                    </select>
+                    <button type="submit"
+                        class="w-full btn-primary py-6 rounded-3xl font-black text-white text-xl tracking-[0.2em] uppercase shadow-2xl">
+                        Apply for Beta Access
+                    </button>
+                    <div
+                        class="pt-6 flex justify-center gap-6 opacity-40 grayscale group-hover:grayscale-0 transition-all">
+                        <i data-lucide="youtube" class="w-6 h-6"></i>
+                        <i data-lucide="facebook" class="w-6 h-6"></i>
+                        <i data-lucide="instagram" class="w-6 h-6"></i>
+                        <i data-lucide="tiktok" class="w-6 h-6"></i>
+                    </div>
+                </form>
+
+                <div id="successMessage" class="hidden py-10 scale-up">
+                    <div
+                        class="w-24 h-24 bg-teal-500/20 rounded-[32px] flex items-center justify-center mx-auto mb-8 animate-bounce">
+                        <i data-lucide="shield-check" class="w-12 h-12 text-teal-400"></i>
+                    </div>
+                    <h3 class="text-4xl font-black mb-4">You're on the list.</h3>
+                    <p class="text-slate-400 mb-10 text-lg">Routing you to the StoryBee HQ on WhatsApp...</p>
+                    <a href="https://chat.whatsapp.com/YOUR_GROUP_ID"
+                        class="text-teal-400 font-bold uppercase tracking-widest text-xs hover:underline">Or enter
+                        manually here &rarr;</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-32 text-center border-t border-white/5 bg-[#010309]">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12 text-left mb-20">
+            <div class="col-span-2">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-8 h-8 glass neo-border rounded-lg flex items-center justify-center p-1.5">
+                        <svg class="w-full h-full text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-black text-white">Axelit StoryBee</span>
+                </div>
+                <p class="text-sm text-slate-500 leading-relaxed max-w-sm">The world's most advanced 13-layer modular
+                    prompting engine for social media content automation.</p>
+            </div>
+            <div>
+                <h4 class="font-black text-white text-xs uppercase tracking-widest mb-6">marathon engine</h4>
+                <ul class="space-y-4 text-xs font-bold text-slate-500">
+                    <li><a href="#" class="hover:text-teal-400">Antigravity Layers</a></li>
+                    <li><a href="#" class="hover:text-teal-400">CreatorFlow Logic</a></li>
+                    <li><a href="#" class="hover:text-teal-400">Risk Mode Tuning</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-black text-white text-xs uppercase tracking-widest mb-6">Community</h4>
+                <ul class="space-y-4 text-xs font-bold text-slate-500">
+                    <li><a href="#" class="hover:text-teal-400">WhatsApp HQ</a></li>
+                    <li><a href="#" class="hover:text-teal-400">Beta Updates</a></li>
+                    <li><a href="#" class="hover:text-teal-400">Platform Docs</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="text-[10px] font-black text-slate-700 uppercase tracking-[0.5em]">&copy; 2026 Axelit Labs.
+            Antigravity Engine All Rights Reserved.</div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        document.getElementById('waitlistForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const platform = document.getElementById('platformPreference').value;
+
+            const message = `Halo Axelit Team! I'm joining the StoryBee Beta.\n\nName: ${name}\nEmail: ${email}\nPreference: ${platform}\nMethod: Antigravity-Portal`;
+            const whatsappUrl = `https://wa.me/YOUR_PHONE_NUMBER?text=${encodeURIComponent(message)}`;
+
+            this.classList.add('hidden');
+            document.getElementById('successMessage').classList.remove('hidden');
+
+            setTimeout(() => {
+                window.location.href = "https://chat.whatsapp.com/YOUR_GROUP_ID";
+            }, 3000);
+        });
+    </script>
+</body>
+
+</html>
