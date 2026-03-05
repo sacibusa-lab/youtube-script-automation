@@ -12,8 +12,13 @@ class CreditLog extends Model
         'input_tokens',
         'output_tokens',
         'total_credits_deducted',
+        'reserved_credits',
         'model_used',
+        'type',
         'action',
+        'ip_hash',
+        'image_count',
+        'regeneration_attempt',
     ];
 
     public function user()

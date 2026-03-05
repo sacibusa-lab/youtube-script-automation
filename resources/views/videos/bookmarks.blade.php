@@ -85,7 +85,7 @@
 
                         <!-- Footer Actions -->
                         <div class="p-6 pt-0 border-t border-gray-50 dark:border-gray-700/50 mt-auto flex items-center justify-between">
-                            <a href="{{ route('projects.show', $bookmark->video_id) }}" class="text-[10px] font-black text-gray-400 hover:text-teal-600 uppercase tracking-widest transition-colors">
+                            <a href="{{ route('projects.show', $bookmark->video_id) }}?concept={{ $bookmark->id }}" class="text-[10px] font-black text-gray-400 hover:text-teal-600 uppercase tracking-widest transition-colors">
                                 View Original Story
                             </a>
                             <span class="text-[10px] font-bold text-gray-300 dark:text-gray-600">{{ $bookmark->created_at->diffForHumans() }}</span>

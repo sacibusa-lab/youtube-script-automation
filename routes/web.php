@@ -9,6 +9,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// ── Paystack Webhook (public, server-to-server, HMAC verified internally) ────
+Route::post('/payment/webhook', [\App\Http\Controllers\PaymentController::class, 'webhook'])
+    ->name('payment.webhook');
+// ─────────────────────────────────────────────────────────────────────────────
+
 Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -24,7 +29,12 @@ Route::middleware('auth')->group(function () {
 
     // Payments & Subscriptions
     Route::get('/payment/initialize', [\App\Http\Controllers\PaymentController::class, 'initialize'])->name('payment.initialize');
+    Route::post('/payment/initialize/topup', [\App\Http\Controllers\PaymentController::class, 'initializeTopup'])->name('payment.initialize.topup');
     Route::get('/payment/callback', [\App\Http\Controllers\PaymentController::class, 'callback'])->name('payment.callback');
+
+    // Billing & Usage History
+    Route::get('/billing/history', [\App\Http\Controllers\BillingController::class, 'history'])->name('billing.history');
+    Route::get('/billing/topup', [\App\Http\Controllers\BillingController::class, 'topup'])->name('topup.index');
 
     // Projects (Story Marathons)
     Route::resource('projects', ProjectController::class);
@@ -45,6 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/chapters/{chapter}/scenes/{scene}/image-status', [ProjectController::class, 'checkSceneImageStatus'])->name('projects.scenes.image-status');
     Route::post('/projects/{project}/regenerate-hook', [ProjectController::class, 'regenerateHook'])->name('projects.regenerate-hook');
     Route::post('/projects/{project}/regenerate-thumbnail', [ProjectController::class, 'regenerateThumbnail'])->name('projects.regenerate-thumbnail');
+    Route::post('/projects/titles/{title}/clone', [ProjectController::class, 'cloneFromConcept'])->name('projects.clone');
     Route::post('/projects/titles/{title}/generate-image', [ProjectController::class, 'generateThumbnailImage'])->name('projects.titles.generate-image');
     Route::get('/projects/{project}/studio', [ProjectController::class, 'studio'])->name('projects.studio');
     Route::post('/projects/{project}/studio/save', [ProjectController::class, 'saveStudioState'])->name('projects.studio.save');
@@ -72,14 +83,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'store'])->name('settings.store');
 
         // Plan Management
-        Route::get('/plans', [\App\Http\Controllers\Admin\PlanController::class, 'index'])->name('plans.index');
-        Route::get('/plans/{plan}/edit', [\App\Http\Controllers\Admin\PlanController::class, 'edit'])->name('plans.edit');
-        Route::patch('/plans/{plan}', [\App\Http\Controllers\Admin\PlanController::class, 'update'])->name('plans.update');
+        Route::resource('plans', \App\Http\Controllers\Admin\PlanController::class)->except(['show', 'destroy']);
+
+        // Top-up Package Management
+        Route::resource('topup-packages', \App\Http\Controllers\Admin\TopupPackageController::class)->except(['show']);
 
         // User Management
-        Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
         Route::patch('/users/{user}/toggle-admin', [\App\Http\Controllers\Admin\UserController::class, 'toggleAdmin'])->name('users.toggle-admin');
-        Route::delete('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('users.destroy');
+        Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['create', 'store', 'show']);
+
+        // Revenue & Payments
+        Route::get('/revenue', [\App\Http\Controllers\Admin\RevenueController::class, 'index'])->name('revenue.index');
 
         // AI Token Economy & Analytics
         Route::get('/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('analytics.index');

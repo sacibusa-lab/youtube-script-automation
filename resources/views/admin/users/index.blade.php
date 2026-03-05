@@ -33,9 +33,10 @@
                             <thead>
                                 <tr class="text-left border-b border-gray-100 dark:border-gray-700">
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">User</th>
+                                    <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Current Plan</th>
+                                    <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Remaining Tokens (S / I)</th>
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Stories</th>
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Role</th>
-                                    <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Joined</th>
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -54,6 +55,17 @@
                                             </div>
                                         </td>
                                         <td class="py-6 px-4">
+                                            <span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                                                {{ $user->plan?->name ?? 'Free / Manual' }}
+                                            </span>
+                                        </td>
+                                        <td class="py-6 px-4">
+                                            <div class="flex flex-col">
+                                                <span class="text-xs font-black text-teal-600">{{ number_format($user->total_credits - $user->used_credits) }} S</span>
+                                                <span class="text-[10px] font-bold text-purple-500">{{ number_format($user->total_image_tokens - $user->used_image_tokens) }} I</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-6 px-4">
                                             <span class="font-black text-sm text-gray-700 dark:text-gray-300">{{ $user->videos_count }}</span>
                                         </td>
                                         <td class="py-6 px-4">
@@ -63,11 +75,11 @@
                                                 <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg text-[9px] font-black uppercase tracking-widest">User</span>
                                             @endif
                                         </td>
-                                        <td class="py-6 px-4">
-                                            <span class="text-[11px] font-bold text-gray-400 uppercase">{{ $user->created_at->format('M d, Y') }}</span>
-                                        </td>
                                         <td class="py-6 px-4 text-right">
                                             <div class="flex items-center justify-end gap-2">
+                                                <a href="{{ route('admin.users.edit', $user) }}" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gray-900 text-white hover:bg-black transition shadow-sm">
+                                                    Manage Account
+                                                </a>
                                                 <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST">
                                                     @csrf
                                                     @method('PATCH')

@@ -1,69 +1,72 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Manage Subscription Plans') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
+    <div class="py-12 bg-zinc-50 dark:bg-zinc-950 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
-            @if (session('success'))
-                <div class="mb-8 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                    <p class="text-sm font-bold text-green-700 dark:text-green-400">{{ session('success') }}</p>
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-black text-gray-950 dark:text-white tracking-tight">Subscription Plans</h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Configure service tiers, credit limits, and premium features.</p>
                 </div>
-            @endif
+                <a href="{{ route('admin.plans.create') }}" class="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-teal-600/20 transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    New Tier
+                </a>
+            </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-[40px] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div class="p-10 border-b border-gray-100 dark:border-gray-700">
-                    <h3 class="text-[24px] font-black text-gray-900 dark:text-white tracking-tight">System Plans</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Configure token limits, prices, and feature availability per tier.</p>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                @foreach($plans as $plan)
+                    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[32px] overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-none transition-all flex flex-col group">
+                        <div class="p-8 border-b border-zinc-100 dark:border-zinc-800">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex flex-col gap-2">
+                                    <span class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700">
+                                        ID: #{{ $plan->id }}
+                                    </span>
+                                    @if($plan->is_active)
+                                        <span class="px-3 py-1 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-teal-500/20">
+                                            Active
+                                        </span>
+                                    @else
+                                        <span class="px-3 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-rose-500/20">
+                                            Inactive
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Monthly Cost</p>
+                                    <p class="text-2xl font-black text-gray-900 dark:text-white leading-none">₦{{ number_format($plan->price) }}</p>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-black text-gray-900 dark:text-white mb-1">{{ $plan->name }}</h3>
+                        </div>
 
-                <div class="p-0 overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 border-b border-gray-100">
-                                <th class="py-4 px-6 text-[11px] font-black text-gray-400 uppercase tracking-widest">Plan Name</th>
-                                <th class="py-4 px-6 text-[11px] font-black text-gray-400 uppercase tracking-widest">Price (₦)</th>
-                                <th class="py-4 px-6 text-[11px] font-black text-gray-400 uppercase tracking-widest">Mo. Credits</th>
-                                <th class="py-4 px-6 text-[11px] font-black text-gray-400 uppercase tracking-widest">Max Tokens</th>
-                                <th class="py-4 px-6 text-[11px] font-black text-gray-400 uppercase tracking-widest">API Access</th>
-                                <th class="py-4 px-6 text-[11px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @foreach($plans as $plan)
-                                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
-                                    <td class="py-4 px-6">
-                                        <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $plan->name }}</p>
-                                    </td>
-                                    <td class="py-4 px-6">
-                                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ number_format($plan->price, 2) }}</p>
-                                    </td>
-                                    <td class="py-4 px-6">
-                                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ number_format($plan->monthly_credits) }}</p>
-                                    </td>
-                                    <td class="py-4 px-6">
-                                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ number_format($plan->max_tokens_per_request) }}</p>
-                                    </td>
-                                    <td class="py-4 px-6">
-                                        @if($plan->api_access)
-                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">Enabled</span>
-                                        @else
-                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10">Disabled</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-4 px-6 text-right">
-                                        <a href="{{ route('admin.plans.edit', $plan) }}" class="inline-flex items-center justify-center p-2 text-teal-600 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors font-bold text-xs">
-                                            Edit Limits
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        <div class="p-8 bg-zinc-50/50 dark:bg-zinc-900/50 flex-1 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Script Credits</span>
+                                <span class="text-sm font-black text-gray-900 dark:text-zinc-200">{{ number_format($plan->monthly_credits / 1000) }}k Tokens</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Image Cost</span>
+                                <span class="text-sm font-black text-teal-600 dark:text-teal-400">{{ number_format($plan->image_credit_cost) }} units</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Max Request</span>
+                                <span class="text-sm font-black text-gray-900 dark:text-zinc-200">{{ number_format($plan->max_tokens_per_request) }} tokens</span>
+                            </div>
+                            
+                            <div class="pt-4 flex flex-wrap gap-2">
+                                @if($plan->api_access) <span class="px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded text-[8px] font-black uppercase">API Access</span> @endif
+                                @if($plan->bulk_upload) <span class="px-2 py-0.5 bg-rose-500/10 text-rose-500 rounded text-[8px] font-black uppercase">Bulk Upload</span> @endif
+                                @if($plan->priority_queue) <span class="px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded text-[8px] font-black uppercase">Priority</span> @endif
+                            </div>
+                        </div>
+
+                        <div class="p-6 mt-auto border-t border-zinc-100 dark:border-zinc-800">
+                            <a href="{{ route('admin.plans.edit', $plan) }}" class="w-full inline-flex items-center justify-center py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-xl font-bold text-sm transition-colors border border-transparent hover:border-zinc-300 dark:hover:border-zinc-600">
+                                Configure Tier
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>

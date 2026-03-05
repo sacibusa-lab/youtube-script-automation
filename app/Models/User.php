@@ -6,6 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Plan;
+use App\Models\CreditLog;
+use App\Models\CreditReservation;
+use App\Models\Payment;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -76,22 +82,35 @@ class User extends Authenticatable
         ];
     }
 
-    public function plan()
+    public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
     }
 
-    public function creditLogs()
+    public function creditLogs(): HasMany
     {
         return $this->hasMany(CreditLog::class);
     }
 
-    public function creditReservations()
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Helper to get total remaining tokens across all pools.
+     */
+    public function totalTokensRemaining(): int
+    {
+        return (int) ($this->total_credits - $this->used_credits);
+    }
+
+    public function creditReservations(): HasMany
     {
         return $this->hasMany(CreditReservation::class);
     }
 
-    public function primaryApiKey()
+    public function primaryApiKey(): BelongsTo
     {
         return $this->belongsTo(UserApiKey::class, 'primary_api_key_id');
     }

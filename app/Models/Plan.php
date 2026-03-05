@@ -10,6 +10,7 @@ class Plan extends Model
         'name',
         'price',
         'monthly_credits',
+        'monthly_image_tokens',
         'max_tokens_per_request',
         'concurrent_jobs',
         'batch_generation_limit',
@@ -20,16 +21,25 @@ class Plan extends Model
         'team_members',
         'priority_queue',
         'direct_support',
+        'image_credit_cost',
+        'max_images_per_script',
+        'max_regeneration_attempts',
+        'is_active',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'monthly_credits' => 'decimal:2',
+        'monthly_image_tokens' => 'integer',
         'rollover_percent' => 'decimal:2',
         'bulk_upload' => 'boolean',
         'series_memory' => 'boolean',
         'api_access' => 'boolean',
         'priority_queue' => 'boolean',
         'direct_support' => 'boolean',
+        'image_credit_cost' => 'integer',
+        'max_images_per_script' => 'integer',
+        'max_regeneration_attempts' => 'integer',
+        'is_active' => 'boolean',
     ];
 }

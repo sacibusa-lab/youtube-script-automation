@@ -67,8 +67,12 @@
                             {{ __('Profile & Billing') }}
                         </x-dropdown-link>
 
-                        <x-dropdown-link :href="route('dashboard')">
-                            {{ __('My Token Usage') }}
+                        <x-dropdown-link :href="route('billing.history')">
+                            {{ __('Usage & Billing History') }}
+                        </x-dropdown-link>
+
+                        <x-dropdown-link :href="route('topup.index')">
+                            {{ __('Buy More Tokens') }}
                         </x-dropdown-link>
                         
                         @if(Auth::user()->isAdmin())
@@ -128,8 +132,12 @@
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile & Billing') }}
+                <x-responsive-nav-link :href="route('billing.history')">
+                    {{ __('Usage & Billing History') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('topup.index')">
+                    {{ __('Buy More Tokens') }}
                 </x-responsive-nav-link>
                 
                 @if(Auth::user()->isAdmin())

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Plan;
 use App\Models\CreditLog;
 use App\Models\CreditReservation;
+use App\Notifications\LowBalanceNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -31,16 +32,6 @@ class BillingService
                 'success' => false,
                 'message' => "Request exceeds the maximum allowed tokens ({$plan->max_tokens_per_request}) for your {$plan->name} plan. Please upgrade to generate larger scripts.",
                 'code'    => 'TOKEN_LIMIT_EXCEEDED',
-            ];
-        }
-
-        // Check abuse: daily spike (3× normal daily average)
-        $spikeCheck = $this->checkDailySpike($user, $estimatedTokens);
-        if (!$spikeCheck['allowed']) {
-            return [
-                'success' => false,
-                'message' => $spikeCheck['message'],
-                'code'    => 'ABUSE_SPIKE_DETECTED',
             ];
         }
 
@@ -103,9 +94,6 @@ class BillingService
         $refund = max(0, $reserved - $actualTotal);
         $user->used_credits -= $refund;
         if ($user->used_credits < 0) $user->used_credits = 0;
-
-        // Update daily tracker
-        $this->incrementDailyUsage($user, $actualTotal);
 
         // Update monthly tracker
         $user->credits_used_this_month += $actualTotal;
@@ -174,9 +162,7 @@ class BillingService
     // =========================================================================
 
     /**
-     * Deducts a flat credit amount per image based on the user's plan tier.
-     * Credits come from the MAIN credit pool (not image token quota).
-     * Validates image count limits and regeneration attempt limits.
+     * Deducts image credits, prioritizing the image token pool.
      */
     public function deductImageCredits(
         User   $user,
@@ -214,33 +200,33 @@ class BillingService
             ];
         }
 
-        // Calculate total credit cost
-        $creditCost = $plan->image_credit_cost * $imageCount;
+        // ─────────────────────────────────────────────────────────────────────
+        // NEW LOGIC: Prioritize Image Token Pool over Script Credits
+        // ─────────────────────────────────────────────────────────────────────
+        $availableImageTokens = $user->total_image_tokens - $user->used_image_tokens;
+        $imageTokensToDeduct  = min($imageCount, $availableImageTokens);
+        $remainingImagesToPay = max(0, $imageCount - $imageTokensToDeduct);
 
-        // Check main credit balance
-        $available = $user->total_credits - $user->used_credits;
-        if ($available < $creditCost) {
-            return [
-                'success' => false,
-                'message' => "Insufficient credits. Generating {$imageCount} image(s) requires {$creditCost} credits. Please upgrade or top up.",
-                'code'    => 'INSUFFICIENT_CREDITS',
-            ];
+        // Calculate total credit cost (only for images NOT covered by tokens)
+        $creditCost = $plan->image_credit_cost * $remainingImagesToPay;
+
+        // Check main credit balance (only if we need a fallback)
+        if ($creditCost > 0) {
+            $availableCredits = $user->total_credits - $user->used_credits;
+            if ($availableCredits < $creditCost) {
+                return [
+                    'success' => false,
+                    'message' => "Insufficient script credits. You had {$imageTokensToDeduct} image tokens, but the remaining {$remainingImagesToPay} image(s) require {$creditCost} script credits.",
+                    'code'    => 'INSUFFICIENT_CREDITS',
+                ];
+            }
         }
 
-        // Check abuse: daily spike
-        $spikeCheck = $this->checkDailySpike($user, $creditCost);
-        if (!$spikeCheck['allowed']) {
-            return [
-                'success' => false,
-                'message' => $spikeCheck['message'],
-                'code'    => 'ABUSE_SPIKE_DETECTED',
-            ];
-        }
-
-        // Deduct credits
+        // Deduct from both pools
+        $user->used_image_tokens       += $imageTokensToDeduct;
         $user->used_credits            += $creditCost;
         $user->credits_used_this_month += $creditCost;
-        $this->incrementDailyUsage($user, $creditCost);
+        
         $user->save();
 
         // Write credit log
@@ -261,7 +247,7 @@ class BillingService
 
         $this->checkThresholdWarning($user);
 
-        Log::info("[BILLING] Deducted {$creditCost} image credits for User {$user->id}. Images: {$imageCount}, Attempt: {$regenerationAttempt}");
+        Log::info("[BILLING] Deducted {$creditCost} script credits & {$imageTokensToDeduct} image tokens for User {$user->id}. Images: {$imageCount}");
 
         return [
             'success'   => true,
@@ -271,37 +257,8 @@ class BillingService
     }
 
     // =========================================================================
-    // ABUSE PROTECTION
+    // LIMITS & VALIDATION
     // =========================================================================
-
-    /**
-     * Checks if today's usage is 3× the user's normal daily average.
-     * If so, flags and blocks the request.
-     */
-    public function checkDailySpike(User $user, int $requestCredits): array
-    {
-        // Reset daily counter if it's a new day
-        $this->resetDailyCounterIfNeeded($user);
-
-        $plan = $user->plan;
-        if (!$plan) return ['allowed' => true];
-
-        // Normal daily average = monthly allocation / 30 days
-        $normalDailyAverage = $plan->monthly_credits / 30;
-        $spikeThreshold     = $normalDailyAverage * 3;
-
-        $projectedDailyUsage = $user->daily_credits_used + $requestCredits;
-
-        if ($projectedDailyUsage > $spikeThreshold) {
-            Log::warning("[ABUSE] User {$user->id} hit daily usage spike. Daily used: {$user->daily_credits_used}, requested: {$requestCredits}, threshold: {$spikeThreshold}");
-            return [
-                'allowed' => false,
-                'message' => 'Unusual usage pattern detected. Daily credit limit exceeded. Please try again tomorrow or contact support.',
-            ];
-        }
-
-        return ['allowed' => true];
-    }
 
     /**
      * Validates that a regeneration attempt is within plan limits.
@@ -400,43 +357,23 @@ class BillingService
         $plan = $user->plan;
         if (!$plan || $plan->monthly_credits <= 0) return;
 
-        $used              = $user->credits_used_this_month;
-        $total             = $plan->monthly_credits;
-        $percentUsed       = ($used / $total) * 100;
-        $remaining         = $user->total_credits - $user->used_credits;
-        $percentRemaining  = ($remaining / $total) * 100;
+        $used             = $user->credits_used_this_month;
+        $total            = $plan->monthly_credits;
+        $percentUsed      = ($used / $total) * 100;
+        $remaining        = $user->total_credits - $user->used_credits;
+        $percentRemaining = ($remaining / $total) * 100;
 
-        if ($percentUsed >= 80) {
+        // 80% used — suggest upgrade (send email once per threshold crossing)
+        if ($percentUsed >= 80 && $percentUsed < 95) {
             $this->triggerUpgradeSuggestion($user, 'credit_usage_80');
-            Log::info("[BILLING] User {$user->id} has used {$percentUsed}% of monthly credits. Upgrade prompted.");
+            $user->notify(new LowBalanceNotification($remaining, $total, 'script', $plan));
+            Log::info("[BILLING] User {$user->id} at {$percentUsed}% script usage. Upgrade email sent.");
         }
 
+        // 5% remaining — urgent warning
         if ($percentRemaining <= 5.0) {
-            Log::info("[BILLING] User {$user->id} below 5% remaining credits. Remaining: {$remaining}");
-        }
-    }
-
-    /**
-     * Increment the rolling daily counter.
-     */
-    protected function incrementDailyUsage(User $user, float $amount): void
-    {
-        $this->resetDailyCounterIfNeeded($user);
-        $user->daily_credits_used += $amount;
-    }
-
-    /**
-     * Resets the daily counter if it's a new calendar day.
-     */
-    protected function resetDailyCounterIfNeeded(User $user): void
-    {
-        $today = now()->startOfDay();
-        $lastReset = $user->daily_credits_reset_at ? Carbon::parse($user->daily_credits_reset_at)->startOfDay() : null;
-
-        if (!$lastReset || $lastReset->lt($today)) {
-            $user->daily_credits_used     = 0;
-            $user->daily_credits_reset_at = now();
-            $user->save();
+            $user->notify(new LowBalanceNotification($remaining, $total, 'script', $plan));
+            Log::info("[BILLING] User {$user->id} below 5% remaining credits ({$remaining} left). Alert sent.");
         }
     }
 

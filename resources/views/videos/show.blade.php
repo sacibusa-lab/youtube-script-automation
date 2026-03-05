@@ -7,10 +7,9 @@
                 <a href="{{ route('projects.index') }}" class="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition flex-shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </a>
-                <div class="min-w-0">
-                    <p class="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]">Active Mission</p>
-                    <h1 class="text-lg font-black text-zinc-900 dark:text-white truncate tracking-tight leading-tight">
-                        {{ $project->selected_title ?? $project->topic }}
+                <div class="min-w-0" x-data="{ currentTitle: @js($project->selected_title ?? $project->topic) }" @title-updated.window="currentTitle = $event.detail">
+                    <p class="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]" x-text="currentTitle === @js($project->selected_title) ? 'Active Mission' : 'Concept Preview'"></p>
+                    <h1 class="text-lg font-black text-zinc-900 dark:text-white truncate tracking-tight leading-tight" x-text="currentTitle">
                     </h1>
                 </div>
             </div>
@@ -37,9 +36,16 @@
             </div>
         </div>
 
-        @if($project->status === 'waiting_for_strategy_selection' && $project->generatedTitles->count() > 0)
+        @if(($project->status === 'waiting_for_strategy_selection' || request('concept')) && $project->generatedTitles->count() > 0)
+        @php
+            $initialIndex = 0;
+            if (request('concept')) {
+                $foundIndex = $project->generatedTitles->search(fn($t) => $t->id == request('concept'));
+                if ($foundIndex !== false) $initialIndex = $foundIndex;
+            }
+        @endphp
         <div class="max-w-7xl mx-auto mb-20" x-data="{ 
-            selectedStrategyIndex: 0,
+            selectedStrategyIndex: @js($initialIndex),
             strategies: @js($project->generatedTitles),
             bookmarks: @js($project->generatedTitles->mapWithKeys(fn($t) => [$t->title => ['id' => $t->id, 'is_saved' => $t->is_saved, 'thumbnail_url' => $t->thumbnail_url, 'thumbnail_status' => $t->thumbnail_status]])),
             get currentStrategy() { return this.strategies[this.selectedStrategyIndex] || {}; },
@@ -206,6 +212,15 @@
                     }
                 }, 3000);
             },
+            init() {
+                this.$watch('selectedStrategyIndex', (val) => {
+                    const title = this.strategies[val]?.title || @js($project->selected_title ?? $project->topic);
+                    window.dispatchEvent(new CustomEvent('title-updated', { detail: title }));
+                });
+                // Initial update
+                const initialTitle = this.strategies[this.selectedStrategyIndex]?.title || @js($project->selected_title ?? $project->topic);
+                window.dispatchEvent(new CustomEvent('title-updated', { detail: initialTitle }));
+            }
         }">
             <!-- Strategy Selection Center -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -318,6 +333,7 @@
 
                             <!-- Launch Button -->
                             <div x-data="{ isLaunching: false }">
+                                @if($project->status === 'waiting_for_strategy_selection')
                                 <form action="{{ route('projects.select-strategy', $project) }}" method="POST" @submit="isLaunching = true">
                                     @csrf
                                     <input type="hidden" name="strategy_index" :value="selectedStrategyIndex">
@@ -332,6 +348,31 @@
                                         </span>
                                     </button>
                                 </form>
+                                @else
+                                <div class="space-y-4">
+                                    <template x-if="currentStrategy.title === @js($project->selected_title)">
+                                        <div class="w-full py-4 px-6 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                                            <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                            Currently Active In This Mission
+                                        </div>
+                                    </template>
+                                    <template x-if="currentStrategy.title !== @js($project->selected_title)">
+                                        <form :action="`/projects/titles/${currentStrategy.id}/clone`" method="POST" @submit="isLaunching = true">
+                                            @csrf
+                                            <button type="submit" 
+                                                :disabled="isLaunching"
+                                                class="w-full py-5 rounded-[28px] bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-xs uppercase tracking-widest shadow-xl hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 border border-zinc-700 dark:border-zinc-200"
+                                            >
+                                                <span x-show="!isLaunching">Launch as New Mission</span>
+                                                <span x-show="isLaunching" class="flex items-center gap-2 italic">
+                                                    <svg class="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    Cloning Vector...
+                                                </span>
+                                            </button>
+                                        </form>
+                                    </template>
+                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>

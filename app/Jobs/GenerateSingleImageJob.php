@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Scene;
+use App\Services\BillingService;
 use App\Services\Media\ImageService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -12,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 
 class GenerateSingleImageJob implements ShouldQueue
 {
@@ -22,18 +24,40 @@ class GenerateSingleImageJob implements ShouldQueue
 
     protected Scene $scene;
     protected ?string $provider;
+    protected int $regenerationAttempt;
 
-    public function __construct(Scene $scene, ?string $provider)
+    public function __construct(Scene $scene, ?string $provider, int $regenerationAttempt = 0)
     {
-        $this->scene = $scene;
-        $this->provider = $provider;
+        $this->scene               = $scene;
+        $this->provider            = $provider;
+        $this->regenerationAttempt = $regenerationAttempt;
     }
 
-    public function handle(ImageService $imageService): void
+    public function handle(ImageService $imageService, BillingService $billing): void
     {
         if ($this->batch()?->cancelled()) {
             return;
         }
+
+        $user = $this->scene->video->user;
+
+        // ── BILLING: Validate and deduct image credits before generation ──────
+        $ipHash  = hash('sha256', Request::ip() ?? '');
+        $result  = $billing->deductImageCredits(
+            user:                 $user,
+            imageCount:           1,
+            regenerationAttempt:  $this->regenerationAttempt,
+            modelUsed:            $this->provider ?? 'image-provider',
+            ipHash:               $ipHash
+        );
+
+        if (!$result['success']) {
+            Log::error("[BILLING] Image generation blocked for scene {$this->scene->id}: {$result['message']}");
+            $this->scene->update(['image_status' => 'blocked', 'image_error' => $result['message']]);
+            // Do NOT throw — just stop this scene gracefully
+            return;
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         try {
             Log::info("Generating image for scene ID: {$this->scene->id} using {$this->provider}");
@@ -48,7 +72,7 @@ class GenerateSingleImageJob implements ShouldQueue
 
             if ($imageUrl) {
                 $this->scene->update([
-                    'image_url' => $imageUrl,
+                    'image_url'      => $imageUrl,
                     'image_provider' => $this->provider
                 ]);
             } else {

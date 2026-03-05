@@ -399,6 +399,51 @@ class ProjectController extends Controller
     }
 
     /**
+     * Launch a new project based on an existing concept.
+     */
+    public function cloneFromConcept(GeneratedTitle $title)
+    {
+        if ($title->video->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $sourceVideo = $title->video;
+
+        // Create a new video record with the same settings
+        $newProject = Video::create([
+            'user_id' => Auth::id(),
+            'channel_id' => $sourceVideo->channel_id,
+            'niche_id' => $sourceVideo->niche_id,
+            'content_structure_id' => $sourceVideo->content_structure_id,
+            'emotional_tone_id' => $sourceVideo->emotional_tone_id,
+            'topic' => $sourceVideo->topic,
+            'niche' => $sourceVideo->niche,
+            'sub_niche' => $sourceVideo->sub_niche,
+            'tier1_country' => $sourceVideo->tier1_country,
+            'duration_minutes' => $sourceVideo->duration_minutes,
+            'chapter_count' => $sourceVideo->chapter_count,
+            'status' => 'architecting_chapters', // Skip strategy selection since we just chose it
+            'selected_title' => $title->title,
+            'mega_hook' => $title->mega_hook,
+            'thumbnail_concept' => $title->thumbnail_concept,
+            'thumbnail_visual_prompt_data' => $title->visual_prompt_data,
+            'metadata' => [
+                'hybrid_intensity' => $sourceVideo->metadata['hybrid_intensity'] ?? 50,
+                'risk_mode' => $sourceVideo->metadata['risk_mode'] ?? 'Safe',
+                'concept_metadata' => $title->metadata ?? null,
+                'is_cloned' => true,
+                'original_video_id' => $sourceVideo->id,
+            ]
+        ]);
+
+        // Dispatch Video Structure Job
+        \App\Jobs\GenerateVideoStructureJob::dispatch($newProject);
+
+        return redirect()->route('projects.show', $newProject)
+            ->with('success', 'New mission launched from concept! Architecting chapters...');
+    }
+
+    /**
      * Trigger manual generation for a specific chapter.
      */
     public function architectChapter(\App\Models\Video $project, \App\Models\Chapter $chapter)

@@ -13,7 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
-            'plan' => \App\Http\Middleware\CheckPlanLimits::class,
+            'plan'  => \App\Http\Middleware\CheckPlanLimits::class,
+        ]);
+        // Exempt Paystack webhook from CSRF (server-to-server POST)
+        $middleware->validateCsrfTokens(except: [
+            'payment/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

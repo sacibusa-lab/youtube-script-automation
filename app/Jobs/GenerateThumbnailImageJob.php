@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\GeneratedTitle;
+use App\Services\BillingService;
 use App\Services\Media\ImageService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 
 class GenerateThumbnailImageJob implements ShouldQueue
 {
@@ -20,13 +22,15 @@ class GenerateThumbnailImageJob implements ShouldQueue
     public $timeout = 300;
 
     protected GeneratedTitle $generatedTitle;
+    protected int $regenerationAttempt;
 
-    public function __construct(GeneratedTitle $generatedTitle)
+    public function __construct(GeneratedTitle $generatedTitle, int $regenerationAttempt = 0)
     {
-        $this->generatedTitle = $generatedTitle;
+        $this->generatedTitle      = $generatedTitle;
+        $this->regenerationAttempt = $regenerationAttempt;
     }
 
-    public function handle(ImageService $imageService): void
+    public function handle(ImageService $imageService, BillingService $billing): void
     {
         Log::info("Starting thumbnail image generation for title ID: {$this->generatedTitle->id}");
 
@@ -34,6 +38,24 @@ class GenerateThumbnailImageJob implements ShouldQueue
 
         // 1. Resolve Image Provider via refactored ImageService
         $provider = $imageService->resolveProvider($this->generatedTitle->video->user_id);
+        $user     = $this->generatedTitle->video->user;
+
+        // ── BILLING: Deduct image credits before generation ───────────────────
+        $ipHash = hash('sha256', Request::ip() ?? '');
+        $result = $billing->deductImageCredits(
+            user:                $user,
+            imageCount:          1,
+            regenerationAttempt: $this->regenerationAttempt,
+            modelUsed:           $provider ?? 'image-provider',
+            ipHash:              $ipHash
+        );
+
+        if (!$result['success']) {
+            Log::error("[BILLING] Thumbnail generation blocked for title {$this->generatedTitle->id}: {$result['message']}");
+            $this->generatedTitle->update(['thumbnail_status' => 'blocked']);
+            return;
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         $prompt = $this->generatedTitle->thumbnail_concept;
 
@@ -48,7 +70,7 @@ class GenerateThumbnailImageJob implements ShouldQueue
 
             if ($imageUrl) {
                 $this->generatedTitle->update([
-                    'thumbnail_url' => $imageUrl,
+                    'thumbnail_url'    => $imageUrl,
                     'thumbnail_status' => 'completed'
                 ]);
                 Log::info("Thumbnail image generation completed for title ID: {$this->generatedTitle->id}");

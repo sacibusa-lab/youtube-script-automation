@@ -4,11 +4,14 @@ namespace App\Services\AI;
 
 use App\Services\AI\DTO\AIResponse;
 use App\Services\AI\Exceptions\ProviderException;
+use App\Models\User;
 use App\Models\UserApiKey;
+use App\Services\BillingService;
 use App\Services\Integration\APIGatewayService;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 
 class AIManager
 {
@@ -36,6 +39,32 @@ class AIManager
 
     public function generate(string $prompt, array $options = [], ?int $userId = null, string $jobType = 'generic', ?int $videoId = null): AIResponse
     {
+        // ── BILLING: Pre-generation credit reservation ─────────────────────────
+        $reservationId = null;
+        if ($userId) {
+            $user = User::find($userId);
+            if ($user) {
+                $plan           = $user->plan;
+                $estimatedTokens = $plan?->max_tokens_per_request ?? 8000;
+
+                $billing  = app(BillingService::class);
+                $reserve  = $billing->reserveTokens(
+                    $user,
+                    $estimatedTokens,
+                    $options['model'] ?? 'unknown',
+                    $jobType
+                );
+
+                if (!$reserve['success']) {
+                    throw new ProviderException($reserve['message']);
+                }
+
+                $reservationId        = $reserve['reservation_id'];
+                $options['reservation_id'] = $reservationId;
+            }
+        }
+        // ───────────────────────────────────────────────────────────────────────
+
         // 1. Determine Initial Provider
         $providerName = $options['provider'] ?? $this->gateway->getPrimaryProvider();
         
@@ -84,9 +113,9 @@ class AIManager
                     try {
                         $decryptedKey = Crypt::decryptString($keyRecord->api_key);
                         $attemptOptions = array_merge($options, [
-                            'model' => $targetModel,
-                            'api_key' => $decryptedKey,
-                            'api_key_id' => $keyRecord->id
+                            'model'      => $targetModel,
+                            'api_key'    => $decryptedKey,
+                            'api_key_id' => $keyRecord->id,
                         ]);
 
                         $response = $this->attemptGeneration($currentProvider, $prompt, $attemptOptions, $userId, $jobType, $videoId);
@@ -106,6 +135,13 @@ class AIManager
             }
         }
 
+        // All providers exhausted — cancel reservation so credits are refunded
+        if ($reservationId && $userId) {
+            $user    = User::find($userId);
+            $billing = app(BillingService::class);
+            $billing->cancelReservation($user, $reservationId);
+        }
+
         throw new ProviderException("AI Orchestration Failed: All resources exhausted. Last error: " . ($lastException ? $lastException->getMessage() : 'None'));
     }
 
@@ -116,42 +152,72 @@ class AIManager
 
         try {
             $response = $provider->generate($prompt, $options);
-            $this->logUsage($response, $userId, $jobType, $videoId, $options['api_key_id'], 'SUCCESS');
+            $this->logUsage($response, $userId, $jobType, $videoId, $options['api_key_id'], 'SUCCESS', $options);
             return $response;
         } catch (\Exception $e) {
-            $this->logUsage(new AIResponse('', 0, 0, $providerName, $options['model'] ?? 'unknown', 0, []), $userId, $jobType, $videoId, $options['api_key_id'], 'FAIL');
+            $this->logUsage(new AIResponse('', 0, 0, $providerName, $options['model'] ?? 'unknown', 0, []), $userId, $jobType, $videoId, $options['api_key_id'], 'FAIL', $options);
             throw $e;
         }
     }
 
-    protected function logUsage(AIResponse $response, ?int $userId, string $jobType, ?int $videoId, ?int $apiKeyId, string $status): void
+    protected function logUsage(AIResponse $response, ?int $userId, string $jobType, ?int $videoId, ?int $apiKeyId, string $status, array $options = []): void
     {
         try {
-            $totalTokens = $response->inputTokens + $response->outputTokens;
-            $creditsUsed = max(0.1, $totalTokens / 1000);
-
+            // Write raw AI usage log
             DB::table('ai_usages')->insert([
-                'user_id' => $userId,
-                'video_id' => $videoId,
-                'api_key_id' => $apiKeyId,
-                'provider' => $response->provider,
-                'model' => $response->model,
-                'input_tokens' => $response->inputTokens,
-                'output_tokens' => $response->outputTokens,
+                'user_id'        => $userId,
+                'video_id'       => $videoId,
+                'api_key_id'     => $apiKeyId,
+                'provider'       => $response->provider,
+                'model'          => $response->model,
+                'input_tokens'   => $response->inputTokens,
+                'output_tokens'  => $response->outputTokens,
                 'estimated_cost' => $response->estimatedCost,
-                'credits_used' => $creditsUsed,
-                'job_type' => $jobType,
-                'status' => $status,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'credits_used'   => $response->inputTokens + $response->outputTokens,
+                'job_type'       => $jobType,
+                'status'         => $status,
+                'created_at'     => now(),
+                'updated_at'     => now(),
             ]);
 
+            // Only deduct credits on success
             if ($userId && $status === 'SUCCESS') {
-                $user = \App\Models\User::find($userId);
-                if ($user) $user->deductCredits($creditsUsed);
+                $user   = User::find($userId);
+                $billing = app(BillingService::class);
+
+                // Hash the IP for logging (anonymised)
+                $ipHash = hash('sha256', Request::ip() ?? '');
+
+                $reservationId = $options['reservation_id'] ?? null;
+
+                if ($reservationId) {
+                    // Settle the existing reservation with exact token counts
+                    $billing->settleTokens(
+                        $user,
+                        (int) $reservationId,
+                        (int) $response->inputTokens,
+                        (int) $response->outputTokens,
+                        $ipHash
+                    );
+                } else {
+                    // No reservation (legacy / direct call) — deduct directly
+                    $user->deductCredits($response->inputTokens + $response->outputTokens, 'script');
+                    Log::info("[BILLING] Direct deduction for User {$userId} (no reservation). Tokens: " . ($response->inputTokens + $response->outputTokens));
+                }
             }
+
+            // Cancel reservation on failure
+            if ($userId && $status === 'FAIL') {
+                $reservationId = $options['reservation_id'] ?? null;
+                if ($reservationId) {
+                    $user    = User::find($userId);
+                    $billing = app(BillingService::class);
+                    $billing->cancelReservation($user, (int) $reservationId);
+                }
+            }
+
         } catch (\Exception $e) {
-            Log::error('AI Usage Logging Failed', ['error' => $e->getMessage()]);
+            Log::error('[BILLING] AI Usage Logging Failed', ['error' => $e->getMessage()]);
         }
     }
 
