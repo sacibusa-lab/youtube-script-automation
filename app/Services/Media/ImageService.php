@@ -61,16 +61,16 @@ class ImageService
     }
 
     /**
-     * Generate an image for a specific scene using the user's configured provider.
+     * Generate an image for a specific scene or text prompt using the user's configured provider.
      *
      * @param int $userId
      * @param string|null $provider
-     * @param mixed $scene
-     * @param array $characterReferences
+     * @param mixed $sceneOrPrompt Either a Scene model, a GeneratedTitle model, or a plain text string.
+     * @param array $allCharacterProfiles An array of character profiles from the Video model to enforce consistency.
      * @param string $folder
      * @return string|null The URL of the generated image
      */
-    public function generateImage(int $userId, ?string $provider, Scene|string $scene, array $characterReferences = [], string $folder = 'generated'): ?string
+    public function generateImage(int $userId, ?string $provider, mixed $sceneOrPrompt, array $allCharacterProfiles = [], string $folder = 'generated'): ?string
     {
         if (!$provider) {
             $provider = $this->resolveProvider($userId);
@@ -87,11 +87,34 @@ class ImageService
             return null;
         }
 
-        $prompt = is_string($scene) ? $scene : $this->promptBuilder->buildImagePrompt($scene, $characterReferences);
+        // 1. Resolve the base text prompt
+        // If it's a Scene model, we can use the prompt builder logic
+        if ($sceneOrPrompt instanceof \App\Models\Scene) {
+            $prompt = $this->promptBuilder->buildImagePrompt($sceneOrPrompt, $sceneOrPrompt->character_references ?? []);
+        } 
+        // If it's a GeneratedTitle model, fetch the thumbnail config
+        elseif ($sceneOrPrompt instanceof \App\Models\GeneratedTitle) {
+            $prompt = $sceneOrPrompt->thumbnail_concept ?? 'Cinematic youtube thumbnail';
+        }
+        else {
+            $prompt = is_string($sceneOrPrompt) ? $sceneOrPrompt : 'Cinematic 8k shot';
+        }
 
-        // Systemic 16:9 Enforcement for YouTube parity
+        // 2. Systemic 16:9 Enforcement for YouTube parity
         if (!str_contains(strtolower($prompt), '16:9') && !str_contains(strtolower($prompt), 'aspect ratio')) {
             $prompt = "[ASPECT RATIO: 16:9] WIDESCREEN HORIZONTAL. " . $prompt . " --ar 16:9";
+        }
+
+        // 3. Inject Strict Character Consistency profiles into the final prompt
+        if (!empty($allCharacterProfiles)) {
+            // If it's a Scene with specific character_references, use those
+            if ($sceneOrPrompt instanceof \App\Models\Scene && !empty($sceneOrPrompt->character_references)) {
+                $enforcementText = $this->promptBuilder->buildCharacterConsistencyText($sceneOrPrompt->character_references, $allCharacterProfiles);
+            } else {
+                // Otherwise, scan the prompt text for names and inject matches
+                $enforcementText = $this->promptBuilder->buildCharacterConsistencyTextFromPrompt($prompt, $allCharacterProfiles);
+            }
+            $prompt .= $enforcementText;
         }
 
         try {

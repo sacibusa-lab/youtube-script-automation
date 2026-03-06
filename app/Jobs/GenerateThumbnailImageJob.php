@@ -64,7 +64,7 @@ class GenerateThumbnailImageJob implements ShouldQueue
                 $this->generatedTitle->video->user_id,
                 $provider,
                 $prompt,
-                [],
+                $this->generatedTitle->video->character_profiles ?? [],
                 'thumbnails'
             );
 

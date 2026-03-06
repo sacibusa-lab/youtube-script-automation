@@ -85,30 +85,39 @@
                 navigator.clipboard.writeText(text);
                 window.dispatchEvent(new CustomEvent('notify', { detail: { message: `${type} copied to clipboard`, type: 'success' } }));
             },
-            async pollStatus(titleId) {
-                const interval = setInterval(async () => {
+            pollStatus(titleId) {
+                if (this.pollIntervals[titleId]) return;
+
+                this.pollIntervals[titleId] = setInterval(async () => {
                     try {
                         const res = await fetch(`/projects/titles/${titleId}/status`);
                         const data = await res.json();
                         
                         if (data.success) {
-                            const strategy = this.strategies.find(s => s.id === titleId);
-                            if (strategy) {
-                                strategy.mega_hook = data.mega_hook;
-                                strategy.thumbnail_concept = data.thumbnail_concept;
-                                strategy.thumbnail_url = data.thumbnail_url;
-                                strategy.thumbnail_status = data.thumbnail_status;
+                            const strategyIndex = this.strategies.findIndex(s => s.id === titleId);
+                            if (strategyIndex !== -1) {
+                                this.strategies[strategyIndex].thumbnail_status = data.thumbnail_status;
+                                this.strategies[strategyIndex].thumbnail_url = data.thumbnail_url;
                                 
-                                // Reset loading states if data arrived or generation failed/blocked
-                                if (['completed', 'failed', 'blocked'].includes(strategy.thumbnail_status)) {
-                                    clearInterval(interval);
+                                if (data.thumbnail_status === 'completed' || data.thumbnail_status === 'failed') {
+                                    clearInterval(this.pollIntervals[titleId]);
+                                    delete this.pollIntervals[titleId];
+                                    
+                                    if(data.thumbnail_status === 'completed') {
+                                        window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Image Generation Complete', type: 'success' } }));
+                                    }
                                 }
+                            }
+
+                            // ** UPDATE TOKENS IF RETURNED BY ENDPOINT **
+                            if (data.user_tokens) {
+                                window.dispatchEvent(new CustomEvent('tokens-updated', { detail: data.user_tokens }));
                             }
                         }
                     } catch (e) {
-                        console.error('Status poll failed', e);
+                        console.error('Polling failed', e);
                     }
-                }, 3000);
+                }, 5000);
             },
             async selectTitle() {
                 if (this.isLaunching) return;
@@ -334,7 +343,7 @@
                                 <button @click="generateThumbnailImage" :disabled="currentStrategy.thumbnail_status === 'generating'" class="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 flex items-center gap-1 disabled:opacity-50">
                                     <svg x-show="currentStrategy.thumbnail_status !== 'generating'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                     <svg x-show="currentStrategy.thumbnail_status === 'generating'" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    Generate Image
+                                    <span x-text="currentThumbnailUrl ? 'Regenerate Image' : 'Generate Image'"></span>
                                 </button>
                             </div>
                         </div>
@@ -420,7 +429,10 @@
         @endphp
         <div class="" 
              x-show="!@js($statusesToHideChapters).includes('{{ $project->status }}') && '{{ $project->status }}' !== 'generating_concept_details'"
-             x-data="{ activeTab: 1 }">
+             x-data="{ 
+                activeTab: parseInt(localStorage.getItem('project_{{ $project->id }}_activeTab')) || 1 
+             }"
+             x-init="$watch('activeTab', val => localStorage.setItem('project_{{ $project->id }}_activeTab', val))">
             
             <!-- System Diagnostics (Loading / Failed) -->
             @if(in_array($project->status, ['pending', 'failed', 'generating_concepts', 'generating_strategies', 'generating_concept_details', 'architecting_chapters', 'generating_structure', 'generating_monthly_plan']))
@@ -551,10 +563,16 @@
                                 <h2 class="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">{{ $chapter->title }}</h2>
                             </div>
                             @if($chapter->status === 'pending')
-                                <form action="{{ route('projects.chapters.architect', [$project, $chapter]) }}" method="POST">
+                                <form action="{{ route('projects.chapters.architect', [$project, $chapter]) }}" method="POST" x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
                                     @csrf
-                                    <button type="submit" class="bg-zinc-900 dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-md whitespace-nowrap">
-                                        Architect Chapter {{ $chapter->chapter_number }}
+                                    <button type="submit" 
+                                            :disabled="isSubmitting"
+                                            class="bg-zinc-900 dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-md whitespace-nowrap flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:active:scale-100">
+                                        <span x-show="!isSubmitting">Architect Chapter {{ $chapter->chapter_number }}</span>
+                                        <span x-show="isSubmitting" style="display: none;" class="flex items-center gap-2 italic">
+                                            <svg class="animate-spin h-3.5 w-3.5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Architecting...
+                                        </span>
                                     </button>
                                 </form>
                             @elseif($chapter->status === 'completed')
@@ -586,18 +604,13 @@
                                         <p class="text-base font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ $scene->narration_text }}</p>
                                     </div>
                                     <div class="w-full lg:w-64 xl:w-72 flex-shrink-0">
-                                        <div class="aspect-video bg-zinc-100 dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative group/img">
-                                            @if($scene->image_url)
-                                                <img src="{{ url($scene->image_url) }}" class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500">
-                                                <a href="{{ url($scene->image_url) }}" download class="absolute top-2 right-2 opacity-0 group-hover/img:opacity-100 transition bg-black/70 p-2 rounded-xl text-white hover:bg-teal-500" title="Download image">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                </a>
-                                            @else
+                                            <div class="aspect-video bg-zinc-100 dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative group/img">
                                                 <div class="w-full h-full" x-data="{
-                                                    imageUrl: null,
+                                                    imageUrl: '{{ $scene->image_url ? url($scene->image_url) : '' }}' || null,
                                                     isGenerating: false,
                                                     pollInterval: null,
                                                     generateImage() {
+                                                        this.imageUrl = null;
                                                         this.isGenerating = true;
                                                         // Trigger generation
                                                         fetch('{{ route('projects.scenes.generate-image', [$project, $chapter, $scene]) }}', {
@@ -616,6 +629,11 @@
                                                             try {
                                                                 const res = await fetch('{{ route('projects.scenes.image-status', [$project, $chapter, $scene]) }}');
                                                                 const data = await res.json();
+                                                                
+                                                                if (data.user_tokens) {
+                                                                    window.dispatchEvent(new CustomEvent('tokens-updated', { detail: data.user_tokens }));
+                                                                }
+
                                                                 if (data.image_url) {
                                                                     this.imageUrl = data.image_url;
                                                                     this.isGenerating = false;
@@ -629,32 +647,38 @@
                                                 }">
                                                     
                                                     <!-- Loading State -->
-                                                    <div x-show="isGenerating" class="w-full h-full flex flex-col items-center justify-center gap-3 p-4 bg-zinc-900/50 absolute inset-0 z-10">
+                                                    <div x-show="isGenerating" class="w-full h-full flex flex-col items-center justify-center gap-3 p-4 bg-zinc-900/50 absolute inset-0 z-10" style="display: none;">
                                                         <div class="w-8 h-8 border-2 border-rose-500/20 border-t-rose-500 rounded-full animate-spin"></div>
                                                         <span class="text-[9px] font-black text-rose-500 uppercase tracking-widest animate-pulse">Rendering</span>
                                                     </div>
 
-                                                    <!-- Result State (Loaded via AJAX) -->
+                                                    <!-- Result State -->
                                                     <template x-if="imageUrl">
                                                         <div class="w-full h-full absolute inset-0 z-20">
                                                             <img :src="imageUrl" class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500">
-                                                            <a :href="imageUrl" download class="absolute top-2 right-2 opacity-0 group-hover/img:opacity-100 transition bg-black/70 p-2 rounded-xl text-white hover:bg-teal-500" title="Download image">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                            </a>
+                                                            
+                                                            <!-- Actions Overlay -->
+                                                            <div class="absolute top-2 right-2 opacity-0 group-hover/img:opacity-100 transition-opacity flex gap-2">
+                                                                <button @click.prevent="generateImage()" class="bg-black/70 p-2 rounded-xl text-white hover:bg-rose-600 transition shadow-lg" title="Regenerate Image">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                                </button>
+                                                                <a :href="imageUrl" download class="bg-black/70 p-2 rounded-xl text-white hover:bg-teal-500 transition shadow-lg" title="Download image">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                                </a>
+                                                            </div>
                                                         </div>
                                                     </template>
 
                                                     <!-- Initial State / Trigger Button -->
-                                                    <div x-show="!imageUrl && !isGenerating" class="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
+                                                    <div x-show="!imageUrl && !isGenerating" class="w-full h-full flex flex-col items-center justify-center gap-3 p-4" style="display: none;">
                                                         <svg class="w-7 h-7 text-zinc-300 dark:text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                        <button type="button" @click="generateImage" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition active:scale-95 flex items-center gap-1.5 shadow-lg shadow-rose-600/20">
+                                                        <button type="button" @click="generateImage()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition active:scale-95 flex items-center gap-1.5 shadow-lg shadow-rose-600/20">
                                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                                             Generate Image
                                                         </button>
                                                     </div>
                                                 </div>
-                                            @endif
-                                            <div class="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-lg">{{ $scene->duration_seconds }}s</div>
+                                            <div class="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-lg z-30">{{ $scene->duration_seconds }}s</div>
                                         </div>
                                         @if($scene->visual_prompt)
                                         <p class="mt-2 text-[10px] text-zinc-400 leading-snug px-1">{{ Str::limit($scene->visual_prompt, 90) }}</p>

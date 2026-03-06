@@ -1234,4 +1234,69 @@ You must now generate ONLY the character list.
 Output ONLY valid JSON.
 PROMPT;
     }
+
+    /**
+     * Helper to build a strict character enforcement string based on an array of active character names
+     *
+     * @param array $activeNames Array of names like ['Dmitri Volkov', 'Fatima Okonkwo']
+     * @param array $allProfiles Array of character profiles from the Video model
+     * @return string
+     */
+    public function buildCharacterConsistencyText(array $activeNames, array $allProfiles): string
+    {
+        if (empty($activeNames) || empty($allProfiles)) {
+            return '';
+        }
+
+        $enforcement = [];
+        foreach ($allProfiles as $profile) {
+            $name = $profile['name'] ?? '';
+            if (empty($name)) continue;
+
+            // Match if the active name is in the full name, or vice-versa
+            foreach ($activeNames as $activeName) {
+                if (stripos($name, trim($activeName)) !== false || stripos(trim($activeName), $name) !== false) {
+                    $appearance = $profile['appearance'] ?? 'Standard cinematic character';
+                    $enforcement[] = "[$name: $appearance]";
+                    break; 
+                }
+            }
+        }
+
+        if (empty($enforcement)) {
+            return '';
+        }
+
+        return "\n\n[STRICT CHARACTER ENFORCEMENT: " . implode(" | ", $enforcement) . "]\n";
+    }
+
+    /**
+     * Helper to parse a text prompt for known character names and build the enforcement string
+     *
+     * @param string $prompt The raw prompt (e.g. from generated_titles or scenes)
+     * @param array $allProfiles Array of character profiles from the Video model
+     * @return string
+     */
+    public function buildCharacterConsistencyTextFromPrompt(string $prompt, array $allProfiles): string
+    {
+        if (empty($prompt) || empty($allProfiles)) {
+            return '';
+        }
+
+        $activeNames = [];
+        foreach ($allProfiles as $profile) {
+            $name = $profile['name'] ?? '';
+            if (empty($name)) continue;
+
+            // Simple partial match - e.g. "Dmitri" inside the prompt
+            $parts = explode(' ', $name);
+            $firstName = $parts[0];
+
+            if (stripos($prompt, $name) !== false || stripos($prompt, $firstName) !== false) {
+                $activeNames[] = $name;
+            }
+        }
+
+        return $this->buildCharacterConsistencyText($activeNames, $allProfiles);
+    }
 }

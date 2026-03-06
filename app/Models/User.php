@@ -105,6 +105,16 @@ class User extends Authenticatable
         return (int) ($this->total_credits - $this->used_credits);
     }
 
+    public function scriptCreditsBalance(): int
+    {
+        return (int) max(0, $this->total_credits - $this->used_credits);
+    }
+
+    public function imageTokensBalance(): int
+    {
+        return (int) max(0, $this->total_image_tokens - $this->used_image_tokens);
+    }
+
     public function creditReservations(): HasMany
     {
         return $this->hasMany(CreditReservation::class);

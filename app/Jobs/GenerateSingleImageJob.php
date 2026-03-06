@@ -66,7 +66,7 @@ class GenerateSingleImageJob implements ShouldQueue
                 $this->scene->video->user_id,
                 $this->provider,
                 $this->scene,
-                $this->scene->character_references ?? [],
+                $this->scene->video->character_profiles ?? [],
                 'scenes'
             );
 

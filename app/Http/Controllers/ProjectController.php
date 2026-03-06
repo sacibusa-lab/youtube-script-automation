@@ -410,9 +410,15 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        $user = Auth::user()->fresh();
+
         return response()->json([
             'status' => 'success',
-            'image_url' => $scene->image_url ? url($scene->image_url) : null
+            'image_url' => $scene->image_url ? url($scene->image_url) : null,
+            'user_tokens' => [
+                'script_credits' => $user->scriptCreditsBalance(),
+                'image_tokens'   => $user->imageTokensBalance()
+            ]
         ]);
     }
 
@@ -443,6 +449,8 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        $user = Auth::user()->fresh();
+
         return response()->json([
             'success' => true,
             'title' => $title->title,
@@ -450,7 +458,11 @@ class ProjectController extends Controller
             'thumbnail_concept' => $title->thumbnail_concept,
             'thumbnail_url' => $title->thumbnail_url,
             'thumbnail_status' => $title->thumbnail_status,
-            'short_script' => $title->short_script
+            'short_script' => $title->short_script,
+            'user_tokens' => [
+                'script_credits' => $user->scriptCreditsBalance(),
+                'image_tokens'   => $user->imageTokensBalance()
+            ]
         ]);
     }
 
