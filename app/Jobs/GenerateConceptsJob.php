@@ -75,7 +75,7 @@ class GenerateConceptsJob implements ShouldQueue
             // Update Video model with strategies
             $this->video->update([
                 'strategies' => $strategies,
-                'status' => 'waiting_for_strategy_selection'
+                'status' => 'waiting_for_title_selection'
             ]);
 
             // Persist as GeneratedTitle records for bookmarking and selection

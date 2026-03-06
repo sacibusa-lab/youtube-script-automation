@@ -16,6 +16,7 @@ class GeneratedTitle extends Model
         'visual_prompt_data',
         'thumbnail_concept',
         'mega_hook',
+        'short_script',
         'thumbnail_url',
         'thumbnail_status',
     ];
@@ -25,6 +26,7 @@ class GeneratedTitle extends Model
         'is_saved' => 'boolean',
         'metadata' => 'array',
         'visual_prompt_data' => 'array',
+        'short_script' => 'array',
     ];
 
     public function video()

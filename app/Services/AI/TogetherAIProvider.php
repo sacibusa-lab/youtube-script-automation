@@ -27,39 +27,61 @@ class TogetherAIProvider implements AIProviderInterface
             throw new ProviderException("Together AI API Key is missing.");
         }
 
-        try {
-            $response = Http::timeout(60)
-                ->withToken($apiKey)
-                ->post('https://api.together.xyz/v1/chat/completions', [
-                    'model' => $targetModel,
-                    'messages' => [['role' => 'user', 'content' => $prompt]],
-                    'temperature' => $options['temperature'] ?? 0.7,
-                    'max_tokens' => $options['max_tokens'] ?? 2000,
-                ]);
+        $maxRetries = 2;
+        $attempt = 0;
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $content = $data['choices'][0]['message']['content'] ?? '';
-                
-                $promptTokens = $data['usage']['prompt_tokens'] ?? 0;
-                $completionTokens = $data['usage']['completion_tokens'] ?? 0;
+        while ($attempt <= $maxRetries) {
+            try {
+                $response = Http::timeout(180)
+                    ->withToken($apiKey)
+                    ->post('https://api.together.xyz/v1/chat/completions', [
+                        'model' => $targetModel,
+                        'messages' => [['role' => 'user', 'content' => $prompt]],
+                        'temperature' => $options['temperature'] ?? 0.7,
+                        'max_tokens' => $options['max_tokens'] ?? 2000,
+                    ]);
 
-                return new AIResponse(
-                    content: $content,
-                    inputTokens: $promptTokens,
-                    outputTokens: $completionTokens,
-                    provider: 'together',
-                    model: $targetModel,
-                    estimatedCost: 0.0,
-                    rawResponse: $data
-                );
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $content = $data['choices'][0]['message']['content'] ?? '';
+                    
+                    $promptTokens = $data['usage']['prompt_tokens'] ?? 0;
+                    $completionTokens = $data['usage']['completion_tokens'] ?? 0;
+
+                    return new AIResponse(
+                        content: $content,
+                        inputTokens: $promptTokens,
+                        outputTokens: $completionTokens,
+                        provider: 'together',
+                        model: $targetModel,
+                        estimatedCost: 0.0,
+                        rawResponse: $data
+                    );
+                }
+
+                if (in_array($response->status(), [429, 500, 502, 503, 504])) {
+                    $attempt++;
+                    if ($attempt <= $maxRetries) {
+                        sleep(pow(2, $attempt));
+                        continue;
+                    }
+                }
+
+                throw new ProviderException("Together AI API error (Status {$response->status()}): " . $response->body());
+
+            } catch (\Exception $e) {
+                if ($e instanceof ProviderException) throw $e;
+                $attempt++;
+                if ($attempt <= $maxRetries) {
+                    sleep(pow(2, $attempt));
+                    continue;
+                }
+                Log::error('Together AI Generation Failed', ['error' => $e->getMessage()]);
+                throw new ProviderException("Together AI connection failed: " . $e->getMessage());
             }
-
-            throw new ProviderException("Together AI API error: " . $response->body());
-        } catch (\Exception $e) {
-            Log::error('Together AI Generation Failed', ['error' => $e->getMessage()]);
-            throw new ProviderException("Failed to connect to Together AI: " . $e->getMessage());
         }
+
+        throw new ProviderException("Together AI generation failed after retries.");
     }
 
     public function getName(): string

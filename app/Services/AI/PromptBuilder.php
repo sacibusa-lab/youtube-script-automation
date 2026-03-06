@@ -265,7 +265,7 @@ PROMPT;
     }
 
     /**
-     * Build multi-strategy prompt for 5 distinct concepts
+     * Build multi-strategy prompt for 5 distinct concepts (Stage 1 - Titles Only)
      */
     public function buildMultiStrategyPrompt(
         string $topic,
@@ -278,41 +278,72 @@ PROMPT;
         return <<<PROMPT
 {$directive}
 
-**TASK: ARCHITECT 5 CINEMATIC VIDEO CONCEPTS**
+**TASK: ARCHITECT 5 VIRAL VIDEO TITLES**
 Niche: {$niche}
 Target Audience: {$tier1Country}
 Topic: {$topic}
 
-Generate 5 completely distinct and viral concepts. Each must have a unique title, a profound narrative mega-hook, and a visual thumbnail concept.
-
-**HOOK ARCHITECTURE GUIDELINES:**
-The "megaHooks" must be a single, cohesive paragraph (approx 80-120 words) that reads like a high-stakes cinematic movie trailer. Do NOT use generic questions. Instead:
-1. Establish a vivid, character-centric premise or powerful dichotomy (e.g., "In the heart of Silicon Valley, a quiet titan of industry...").
-2. Introduce a specific protagonist or focal entity, their audacious goal, and their unexpected method.
-3. Introduce a ticking clock, a powerful adversary, or a dark secret that threatens to derail everything, ending on a cliffhanger.
-4. Each hook should be 4-6 sentences (approx 30s read time).
-
-**THUMBNAIL PROMPT GUIDELINES:**
-The "prompt" field MUST be approximately 400 words of flowing prose (NOT JSON).
-1. FEATURE 2–3 PEOPLE: Describe 2 or 3 characters (e.g., "a feared boss, a small girl clutching his sleeve with tears, and an injured woman in the background").
-2. PHOTOREALISTIC & PROFESSIONAL: Include: photorealistic, 8K, cinematic lighting, 85mm Prime f/1.8 lens, shallow depth of field.
-3. EMOTION FOR CTR: Include strong emotional cues—tears, fear, desperation, tension, shock, or tenderness.
-4. MANDATORY 16:9 WIDESCREEN: Ensure the prompt explicitly describes a YouTube-ready widescreen composition.
-5. No bullet lists inside the string.
+Generate 5 completely distinct and viral titles. Focus on extreme curiosity gaps and high-stakes emotional hooks.
 
 **OUTPUT SCHEMA (MANDATORY JSON):**
 {
   "strategies": [
     {
-      "title": "Concept Title",
-      "megaHooks": ["The detailed 30s narrative hook."],
-      "thumbnailConcepts": [
-        {
-          "prompt": "The detailed 400-word cinematic thumbnail prompt."
-        }
-      ]
+      "title": "Concept Title"
     }
   ]
+}
+PROMPT;
+    }
+
+    /**
+     * Build Stage 2: Concept Architecture Prompt (Hook + Thumbnail + Short Script)
+     */
+    public function buildConceptArchitecturePrompt(
+        string $title,
+        string $topic,
+        string $niche,
+        string $tier1Country,
+        string $tier = 'PRO'
+    ): string {
+        $directive = $this->getSystemDirective(['niche' => $niche, 'tier' => $tier]);
+        
+        return <<<PROMPT
+{$directive}
+
+**TASK: ARCHITECT CINEMATIC CONCEPT DETAILS**
+Selected Title: {$title}
+Niche: {$niche}
+Topic: {$topic}
+
+Generate the full narrative and visual architecture for this specific title.
+
+**1. MEGA-HOOK (FIRST 30S):**
+- A single, cohesive paragraph (80-120 words).
+- Cinematic trailer style. Character-centric.
+- High-stakes dichotomy. Ends on a cliffhanger.
+
+**2. THUMBNAIL PROMPT:**
+- 400 words of flowing, photorealistic prose.
+- Feature 2-3 characters (e.g., "Ethan Hayes, mid-twenties, crisp hotel uniform" vs "Mr. Sterling Vance, late 50s, charcoal grey suit").
+- Use: photorealistic, 8K, cinematic lighting, 85mm Prime f/1.8, 16:9 widescreen.
+- Focus on emotional CTR (tears, shock, judgment, tension).
+
+**3. SHORT VIDEO SCRIPT PREVIEW (6-15s):**
+- [SCENE]: Describe the opening visual (e.g., "Johnathan Sterling stands beside a beat-up car, looking distraught as a valet smirks.").
+- NARRATION: 2-3 sentences of high-impact copy.
+
+**OUTPUT SCHEMA (MANDATORY JSON):**
+{
+  "status": "SUCCESS",
+  "content": {
+    "mega_hook": "The detailed 30s narrative hook.",
+    "thumbnail_concept": "The full 400-word photographic prose prompt.",
+    "short_script": {
+       "scene": "...",
+       "narration": "..."
+    }
+  }
 }
 PROMPT;
     }

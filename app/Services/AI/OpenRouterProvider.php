@@ -43,7 +43,7 @@ class OpenRouterProvider implements AIProviderInterface
                     'max_tokens' => $options['max_tokens'] ?? 4000,
                 ];
 
-                $response = Http::timeout(60)
+                $response = Http::timeout(180)
                     ->withoutVerifying()
                     ->withHeaders([
                         'Authorization' => "Bearer {$apiKey}",
@@ -104,7 +104,7 @@ class OpenRouterProvider implements AIProviderInterface
         if (empty($key)) return [];
 
         try {
-            $response = Http::timeout(30)->withoutVerifying()->withHeaders([
+            $response = Http::timeout(60)->withoutVerifying()->withHeaders([
                 'Authorization' => "Bearer {$key}",
             ])->get('https://openrouter.ai/api/v1/models');
 

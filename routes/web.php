@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/v1/ai/production-role', [App\Http\Controllers\Api\AIRoleController::class, 'execute'])->name('api.ai.role.execute');
     Route::post('/projects/{project}/retry', [ProjectController::class, 'retry'])->name('projects.retry');
     Route::post('/projects/{project}/select-title', [ProjectController::class, 'selectTitle'])->name('projects.select-title');
+    Route::post('/projects/{project}/launch', [ProjectController::class, 'launchMission'])->name('projects.launch');
     Route::post('/projects/{project}/select-strategy', [ProjectController::class, 'selectStrategy'])->name('projects.select-strategy');
     Route::get('/projects/{project}/export', [ProjectController::class, 'export'])->name('projects.export');
     Route::post('/projects/{project}/chapters/{chapter}/architect', [ProjectController::class, 'architectChapter'])->name('projects.chapters.architect');

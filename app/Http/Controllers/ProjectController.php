@@ -116,6 +116,26 @@ class ProjectController extends Controller
     }
 
     /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'nullable|string',
+            'topic' => 'nullable|string',
+            'niche' => 'nullable|string',
+        ]);
+
+        $project->update($validated);
+
+        return back()->with('success', 'Project updated successfully.');
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(Video $project)
@@ -182,29 +202,52 @@ class ProjectController extends Controller
         }
         
         $validated = $request->validate([
-            'selected_title' => 'required|string|max:255',
-            'mega_hook' => 'nullable|string',
+            'title_id' => 'required|exists:generated_titles,id',
         ]);
 
-        $generatedTitle = GeneratedTitle::where('video_id', $project->id)
-            ->where('title', $validated['selected_title'])
-            ->first();
+        $generatedTitle = GeneratedTitle::findOrFail($validated['title_id']);
 
         $project->update([
-            'selected_title' => $validated['selected_title'],
-            'mega_hook' => $validated['mega_hook'] ?? $generatedTitle->mega_hook,
-            'thumbnail_concept' => $generatedTitle->thumbnail_concept,
-            'metadata' => array_merge($project->metadata ?? [], [
-                'concept_metadata' => $generatedTitle->metadata ?? null
-            ]),
-            'status' => 'generating_thumbnail_concept', // New intermediate state
+            'selected_title' => $generatedTitle->title,
+            'status' => 'generating_concept_details',
         ]);
 
-        // Trigger the second stage: Detailed Thumbnail Prompt Generation (13-Layer Modular Engine)
-        \App\Jobs\GenerateThumbnailPromptJob::dispatch($project);
+        // Stage 2: Detailed Hook, Thumbnail Prompt, and Short Script
+        \App\Jobs\GenerateTitleDetailsJob::dispatch($project, $generatedTitle->id);
 
         return redirect()->route('projects.show', $project)
-            ->with('success', 'Concept selected! Generating high-fidelity visual prompts...');
+            ->with('success', 'Title selected! Architecting the narrative hook and visual concept...');
+    }
+
+    /**
+     * Final step: Launch the full video generation mission.
+     */
+    public function launchMission(Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Finalize metadata from the selected title
+        $generatedTitle = GeneratedTitle::where('video_id', $project->id)
+            ->where('title', $project->selected_title)
+            ->first();
+
+        if (!$generatedTitle) {
+            return back()->with('error', 'No concept found for this title.');
+        }
+
+        $project->update([
+            'mega_hook' => $generatedTitle->mega_hook,
+            'thumbnail_concept' => $generatedTitle->thumbnail_concept,
+            'status' => 'architecting_chapters',
+        ]);
+
+        // Dispatch Video Structure Job
+        \App\Jobs\GenerateVideoStructureJob::dispatch($project);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Mission Launched! Architecting your cinematic video story bible and chapters...');
     }
 
     /**
@@ -244,7 +287,7 @@ class ProjectController extends Controller
     }
 
     /**
-     * Trigger background job to regenerate a single retention hook
+     * Regenerate the mega-hook for a specific title variant.
      */
     public function regenerateHook(Request $request, Video $project)
     {
@@ -256,16 +299,31 @@ class ProjectController extends Controller
             'title_id' => 'required|exists:generated_titles,id'
         ]);
 
-        \App\Jobs\RegenerateHookJob::dispatch($project, $validated['title_id']);
+        $title = GeneratedTitle::where('id', $validated['title_id'])->where('video_id', $project->id)->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Hook regeneration started'
-        ]);
+        $aiManager = app(\App\Services\AI\AIManager::class);
+        $promptBuilder = app(\App\Services\AI\PromptBuilder::class);
+
+        $prompt = $promptBuilder->buildMegaHookPrompt($title->title, $project->niche, $project->tier1_country);
+        
+        try {
+            $response = $aiManager->generate($prompt, [], $project->user_id, 'hook', $project->id);
+            $content = json_decode($response->content, true)['content'] ?? $response->content;
+            
+            $title->update(['mega_hook' => $content]);
+
+            return response()->json([
+                'success' => true,
+                'mega_hook' => $content
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to regenerate hook: " . $e->getMessage());
+            return response()->json(['error' => 'Generation failed: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
-     * Trigger background job to regenerate a single thumbnail prompt
+     * Regenerate the thumbnail prompt for a specific title variant.
      */
     public function regenerateThumbnail(Request $request, Video $project)
     {
@@ -277,16 +335,31 @@ class ProjectController extends Controller
             'title_id' => 'required|exists:generated_titles,id'
         ]);
 
-        \App\Jobs\RegenerateThumbnailJob::dispatch($project, $validated['title_id']);
+        $title = GeneratedTitle::where('id', $validated['title_id'])->where('video_id', $project->id)->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Thumbnail regeneration started'
-        ]);
+        $aiManager = app(\App\Services\AI\AIManager::class);
+        $promptBuilder = app(\App\Services\AI\PromptBuilder::class);
+
+        $prompt = $promptBuilder->buildThumbnailPrompt($title->title, $title->mega_hook, $project->niche);
+        
+        try {
+            $response = $aiManager->generate($prompt, [], $project->user_id, 'thumbnail', $project->id);
+            $content = json_decode($response->content, true)['content'] ?? $response->content;
+            
+            $title->update(['thumbnail_concept' => $content]);
+
+            return response()->json([
+                'success' => true,
+                'thumbnail_concept' => $content
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to regenerate thumbnail prompt: " . $e->getMessage());
+            return response()->json(['error' => 'Generation failed: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
-     * Manually trigger image generation for a thumbnail concept
+     * Trigger image generation from the thumbnail prompt for a specific title variant.
      */
     public function generateThumbnailImage(GeneratedTitle $title)
     {
@@ -295,14 +368,17 @@ class ProjectController extends Controller
         }
 
         if (empty($title->thumbnail_concept)) {
-            return response()->json(['error' => 'No thumbnail concept found'], 400);
+            return response()->json(['error' => 'No thumbnail concept exists to generate from.'], 400);
         }
 
+        $title->update(['thumbnail_status' => 'generating']);
+
+        // Directly dispatch the job
         \App\Jobs\GenerateThumbnailImageJob::dispatch($title);
 
         return response()->json([
             'success' => true,
-            'message' => 'Image generation triggered'
+            'message' => 'Image generation triggered.'
         ]);
     }
     /**
@@ -360,9 +436,6 @@ class ProjectController extends Controller
         ]);
     }
 
-    /**
-     * Check the status of a specific generated title (AJAX/Polling).
-     */
     public function checkTitleStatus(GeneratedTitle $title)
     {
         // Ownership check
@@ -376,7 +449,8 @@ class ProjectController extends Controller
             'mega_hook' => $title->mega_hook,
             'thumbnail_concept' => $title->thumbnail_concept,
             'thumbnail_url' => $title->thumbnail_url,
-            'thumbnail_status' => $title->thumbnail_status
+            'thumbnail_status' => $title->thumbnail_status,
+            'short_script' => $title->short_script
         ]);
     }
 
@@ -409,6 +483,8 @@ class ProjectController extends Controller
 
         $sourceVideo = $title->video;
 
+        $hasDetails = !empty($title->mega_hook);
+
         // Create a new video record with the same settings
         $newProject = Video::create([
             'user_id' => Auth::id(),
@@ -422,25 +498,29 @@ class ProjectController extends Controller
             'tier1_country' => $sourceVideo->tier1_country,
             'duration_minutes' => $sourceVideo->duration_minutes,
             'chapter_count' => $sourceVideo->chapter_count,
-            'status' => 'architecting_chapters', // Skip strategy selection since we just chose it
+            'status' => $hasDetails ? 'waiting_for_launch' : 'generating_concept_details',
             'selected_title' => $title->title,
             'mega_hook' => $title->mega_hook,
             'thumbnail_concept' => $title->thumbnail_concept,
             'thumbnail_visual_prompt_data' => $title->visual_prompt_data,
-            'metadata' => [
-                'hybrid_intensity' => $sourceVideo->metadata['hybrid_intensity'] ?? 50,
-                'risk_mode' => $sourceVideo->metadata['risk_mode'] ?? 'Safe',
-                'concept_metadata' => $title->metadata ?? null,
+            'metadata' => array_merge($sourceVideo->metadata ?? [], [
                 'is_cloned' => true,
                 'original_video_id' => $sourceVideo->id,
-            ]
+            ])
         ]);
 
-        // Dispatch Video Structure Job
-        \App\Jobs\GenerateVideoStructureJob::dispatch($newProject);
+        // Clone the title record for the new project
+        $newTitle = $title->replicate();
+        $newTitle->video_id = $newProject->id;
+        $newTitle->is_saved = false;
+        $newTitle->save();
+
+        if (!$hasDetails) {
+            \App\Jobs\GenerateTitleDetailsJob::dispatch($newProject, $newTitle->id);
+        }
 
         return redirect()->route('projects.show', $newProject)
-            ->with('success', 'New mission launched from concept! Architecting chapters...');
+            ->with('success', $hasDetails ? 'Concept cloned! Mission ready for launch.' : 'Concept cloned! Architecting narrative details...');
     }
 
     /**
