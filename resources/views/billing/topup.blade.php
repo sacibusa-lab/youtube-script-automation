@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-12 bg-zinc-50 dark:bg-zinc-950 min-h-screen">
+    <div class="py-12 bg-white dark:bg-zinc-950 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-12 text-center">
                 <h1 class="text-4xl font-black text-gray-950 dark:text-white mb-4 tracking-tight uppercase">Fuel Your Engine</h1>

@@ -79,6 +79,9 @@
                         <x-dropdown-link :href="route('admin.plans.index')">
                             {{ __('Manage Plans') }}
                         </x-dropdown-link>
+                        <x-dropdown-link :href="route('admin.topup-packages.index')">
+                            {{ __('Manage Top-ups') }}
+                        </x-dropdown-link>
                         <x-dropdown-link :href="route('admin.settings.index')">
                             {{ __('System Settings') }}
                         </x-dropdown-link>
@@ -143,6 +146,9 @@
                 @if(Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('admin.plans.index')">
                     {{ __('Manage Plans') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.topup-packages.index')">
+                    {{ __('Manage Top-ups') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.settings.index')">
                     {{ __('System Settings') }}

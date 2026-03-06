@@ -338,7 +338,18 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="text-zinc-300 italic leading-relaxed text-sm" x-text="currentThumbnail"></p>
+                        <div class="flex flex-col gap-6">
+                            <p class="text-zinc-300 italic leading-relaxed text-sm" x-text="currentThumbnail"></p>
+                            
+                            <template x-if="currentThumbnailUrl">
+                                <div class="w-full aspect-video rounded-xl overflow-hidden border border-zinc-100 dark:border-zinc-800 relative group">
+                                    <img :src="currentThumbnailUrl" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                    <a :href="currentThumbnailUrl" download class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 p-2 rounded-xl text-white hover:bg-teal-500" title="Download image">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    </a>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <!-- Mega Hook Card -->

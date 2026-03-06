@@ -90,8 +90,8 @@ class ImageService
         $prompt = is_string($scene) ? $scene : $this->promptBuilder->buildImagePrompt($scene, $characterReferences);
 
         // Systemic 16:9 Enforcement for YouTube parity
-        if (!str_contains(strtolower($prompt), '16:9') && !str_contains(strtolower($prompt), 'widescreen')) {
-            $prompt .= ", 16:9 widescreen";
+        if (!str_contains(strtolower($prompt), '16:9') && !str_contains(strtolower($prompt), 'aspect ratio')) {
+            $prompt = "[ASPECT RATIO: 16:9] WIDESCREEN HORIZONTAL. " . $prompt . " --ar 16:9";
         }
 
         try {
@@ -236,6 +236,11 @@ class ImageService
                 'messages' => [
                     ['role' => 'user', 'content' => $prompt]
                 ],
+                // Add explicit dimensional hints for models that support parameter mapping on OpenRouter
+                'width' => 1344,
+                'height' => 768,
+                'aspect_ratio' => '16:9',
+                'aspectRatio' => '16:9',
             ]);
 
         if ($response->successful()) {
