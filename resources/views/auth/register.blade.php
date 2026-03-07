@@ -54,7 +54,10 @@
                                     ₦{{ number_format($plan->price) }} / mo
                                 </span>
                                 <span class="mt-2 text-xs font-medium text-teal-600 bg-teal-50 px-2 py-1 rounded inline-block w-max">
-                                    {{ number_format($plan->monthly_credits) }} Tokens
+                                    {{ number_format($plan->monthly_credits / 1000) }}k Tokens + {{ number_format($plan->monthly_image_tokens) }} Free Images
+                                </span>
+                                <span class="mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Cap: {{ $plan->max_images_per_script }} imgs / story
                                 </span>
                             </div>
                         </div>
@@ -67,23 +70,6 @@
             <x-input-error :messages="$errors->get('plan_id')" class="mt-2" />
         </div>
 
-        <script>
-            function updatePlanSelection(input) {
-                // Remove styling from all
-                document.querySelectorAll('input[name="plan_id"]').forEach(radio => {
-                    let parent = radio.closest('label');
-                    parent.classList.remove('border-teal-500', 'ring-1', 'ring-teal-500');
-                    parent.classList.add('border-gray-200');
-                    parent.querySelector('.check-icon').classList.add('hidden');
-                });
-                
-                // Add styling to selected
-                let parent = input.closest('label');
-                parent.classList.remove('border-gray-200');
-                parent.classList.add('border-teal-500', 'ring-1', 'ring-teal-500');
-                parent.querySelector('.check-icon').classList.remove('hidden');
-            }
-        </script>
 
         <div class="flex items-center justify-end mt-4">
             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">

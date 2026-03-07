@@ -14,7 +14,7 @@ class PlanController extends Controller
      */
     public function index()
     {
-        $plans = Plan::all();
+        $plans = Plan::orderBy('sort_order')->get();
         return view('admin.plans.index', compact('plans'));
     }
 
@@ -109,5 +109,22 @@ class PlanController extends Controller
         \Log::info("Plan updated ID: {$plan->id}. New state: " . json_encode($plan->fresh()));
 
         return redirect()->route('admin.plans.index')->with('success', 'Plan updated successfully!');
+    }
+
+    /**
+     * Reorder plans via AJAX.
+     */
+    public function reorder(Request $request)
+    {
+        $order = $request->input('order');
+        if (!$order || !is_array($order)) {
+            return response()->json(['success' => false, 'message' => 'Invalid order data.'], 400);
+        }
+
+        foreach ($order as $index => $id) {
+            Plan::where('id', $id)->update(['sort_order' => $index]);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

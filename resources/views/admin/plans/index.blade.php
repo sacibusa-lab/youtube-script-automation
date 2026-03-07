@@ -12,9 +12,14 @@
                 </a>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div id="plans-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach($plans as $plan)
-                    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[32px] overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-none transition-all flex flex-col group">
+                    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[32px] overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-none transition-all flex flex-col group relative" data-id="{{ $plan->id }}">
+                        <!-- Drag Handle -->
+                        <div class="drag-handle absolute top-4 left-4 p-2 cursor-move text-zinc-300 dark:text-zinc-700 hover:text-teal-500 dark:hover:text-teal-400 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8h16M4 16h16"></path></svg>
+                        </div>
+
                         <div class="p-8 border-b border-zinc-100 dark:border-zinc-800">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex flex-col gap-2">
@@ -52,6 +57,14 @@
                                 <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Max Request</span>
                                 <span class="text-sm font-black text-gray-900 dark:text-zinc-200">{{ number_format($plan->max_tokens_per_request) }} tokens</span>
                             </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Free Images</span>
+                                <span class="text-sm font-black text-teal-600 dark:text-teal-400">{{ number_format($plan->monthly_image_tokens) }} / mo</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Script Image Cap</span>
+                                <span class="text-sm font-black text-gray-900 dark:text-zinc-200">{{ number_format($plan->max_images_per_script) }} imgs</span>
+                            </div>
                             
                             <div class="pt-4 flex flex-wrap gap-2">
                                 @if($plan->api_access) <span class="px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded text-[8px] font-black uppercase">API Access</span> @endif
@@ -70,4 +83,46 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        (function() {
+            function initSortable() {
+                var el = document.getElementById('plans-container');
+                if (!el) return;
+                
+                Sortable.create(el, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'opacity-50',
+                    onEnd: function() {
+                        var order = [];
+                        for (var i = 0; i < el.children.length; i++) {
+                            order.push(el.children[i].getAttribute('data-id'));
+                        }
+                        
+                        fetch("{{ route('admin.plans.reorder') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ order: order })
+                        })
+                        .then(function(res) { return res.json(); })
+                        .then(function(data) { console.log('Reordered successfully'); })
+                        .catch(function(err) { console.error('Reorder error:', err); });
+                    }
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initSortable);
+            } else {
+                initSortable();
+            }
+        })();
+    </script>
+    @endpush
 </x-app-layout>

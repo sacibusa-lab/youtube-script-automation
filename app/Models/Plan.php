@@ -25,6 +25,7 @@ class Plan extends Model
         'max_images_per_script',
         'max_regeneration_attempts',
         'is_active',
+        'sort_order',
     ];
 
     protected $casts = [
@@ -41,5 +42,6 @@ class Plan extends Model
         'max_images_per_script' => 'integer',
         'max_regeneration_attempts' => 'integer',
         'is_active' => 'boolean',
+        'sort_order' => 'integer',
     ];
 }

@@ -5,9 +5,8 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/pricing', [\App\Http\Controllers\HomeController::class, 'pricing'])->name('pricing');
 
 // ── Paystack Webhook (public, server-to-server, HMAC verified internally) ────
 Route::post('/payment/webhook', [\App\Http\Controllers\PaymentController::class, 'webhook'])
@@ -84,6 +83,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'store'])->name('settings.store');
 
         // Plan Management
+        Route::post('plans/reorder', [\App\Http\Controllers\Admin\PlanController::class, 'reorder'])->name('plans.reorder');
         Route::resource('plans', \App\Http\Controllers\Admin\PlanController::class)->except(['show', 'destroy']);
 
         // Top-up Package Management
@@ -106,3 +106,12 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// ── Fallback Route for serving Storage Files Locally (bypasses Windows 403 errors) ────
+Route::get('/storage/{path}', function (string $path) {
+    $filePath = storage_path('app/public/' . $path);
+    if (!file_exists($filePath)) {
+        abort(404);
+    }
+    return response()->file($filePath);
+})->where('path', '.*')->name('storage.local');

@@ -42,7 +42,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $plans = Plan::all();
+        $plans = Plan::orderBy('sort_order')->get();
         return view('admin.users.edit', compact('user', 'plans'));
     }
 
