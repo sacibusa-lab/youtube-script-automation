@@ -5,17 +5,26 @@
     }" 
     x-show="open"
     x-on:open-credit-modal.window="open = true"
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+    x-on:close-credit-modal.window="open = false"
+    @keydown.escape.window="open = false"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
     x-cloak
 >
     <!-- Modal Container -->
     <div 
-        @click.away="open = false" 
+        @click.outside="open = false" 
         class="bg-zinc-900 border border-zinc-800 rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl relative"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
     >
+        <!-- Top-right Close Trigger -->
+        <button type="button" @click="open = false" class="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors z-50">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
         <!-- Futuristic Glow Background -->
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-teal-500 to-transparent blur-sm"></div>
 
@@ -52,14 +61,15 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-teal-400 font-black text-sm" x-text="'${' + Number(pkg.price).toFixed(2) + '}'"></p>
+                            <p class="text-teal-400 font-black text-sm" x-text="'$' + Number(pkg.price).toFixed(2)"></p>
                         </div>
                     </a>
                 </template>
             </div>
 
             <button 
-                @click.prevent.stop="open = false" 
+                type="button"
+                @click="open = false" 
                 class="w-full py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-white transition-colors"
             >
                 Dismiss / Close
