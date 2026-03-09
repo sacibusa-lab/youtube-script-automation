@@ -4,6 +4,10 @@
         open: @json(session('insufficient_credits') || (Auth::user()->scriptCreditsBalance() <= 0))
     }"
     x-show="open"
+    x-cloak
+    @if(!(session('insufficient_credits') || (Auth::user()->scriptCreditsBalance() <= 0)))
+        style="display: none !important;"
+    @endif
     x-on:open-credit-modal.window="open = true"
     x-on:close-credit-modal.window="open = false"
     class="relative z-[100] bg-white border-b-2 border-red-100 py-3 overflow-hidden shadow-md"
