@@ -503,7 +503,7 @@
                             @endif
                         </div>
 
-                        <a href="{{ route('register', ['plan' => $plan->id]) }}" 
+                        <a href="{{ route('register', ['plan_id' => $plan->id]) }}" 
                            class="w-full py-5 rounded-2xl text-center font-black text-[11px] uppercase tracking-widest transition-all {{ $plan->name == 'Creator' ? 'btn-premium' : 'bg-white/5 border border-white/5 text-white hover:bg-white/10' }}">
                             Select Directive
                         </a>

@@ -160,7 +160,7 @@
                             @endif
                         </div>
 
-                        <a href="{{ route('register', ['plan' => $plan->id]) }}" 
+                        <a href="{{ route('register', ['plan_id' => $plan->id]) }}" 
                            class="w-full py-4 rounded-2xl text-center font-bold text-sm transition-all {{ $plan->name == 'Creator' ? 'btn-primary text-white shadow-lg shadow-teal-500/20' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10' }}">
                             Select {{ $plan->name }}
                         </a>

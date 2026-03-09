@@ -41,12 +41,12 @@
 
         <!-- Select Plan -->
         <div class="mt-8">
-            <x-input-label :value="__('Select Your Subscription Plan')" class="text-sm font-bold text-gray-900 mb-4" />
+            <x-input-label :value="$plans->count() === 1 ? __('Selected Subscription Plan') : __('Select Your Subscription Plan')" class="text-sm font-bold text-gray-900 mb-4" />
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($plans as $plan)
                     <label class="relative flex cursor-pointer rounded-xl border border-gray-200 bg-white p-4 shadow-sm focus:outline-none hover:border-teal-400 hover:shadow-md transition">
-                        <input type="radio" name="plan_id" value="{{ $plan->id }}" class="sr-only" required {{ old('plan_id') == $plan->id ? 'checked' : '' }} onchange="updatePlanSelection(this)">
+                        <input type="radio" name="plan_id" value="{{ $plan->id }}" class="sr-only" required {{ ($plans->count() === 1 || old('plan_id') == $plan->id) ? 'checked' : '' }} onchange="updatePlanSelection(this)">
                         <div class="flex flex-1 items-center">
                             <div class="flex flex-col">
                                 <span class="block text-sm font-black text-gray-900">{{ $plan->name }}</span>
