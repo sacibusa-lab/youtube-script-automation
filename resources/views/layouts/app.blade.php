@@ -20,6 +20,7 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>[x-cloak] { display: none !important; }</style>
     
     <script>
         // On page load or when changing themes, best to add inline in `head` to avoid FOUC
@@ -89,6 +90,19 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        /* Marquee Animation */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-33.3333%); }
+        }
+        .animate-marquee {
+            animation: marquee 30s linear infinite;
+            width: max-content;
+        }
+        .animate-marquee:hover {
+            animation-play-state: paused;
         }
 
         .top-header {
@@ -228,6 +242,8 @@
     <!-- Main Wrapper -->
     <div class="main-wrapper flex flex-col bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
         
+        <x-exhausted-credits-banner />
+
         <!-- Header -->
         <header class="top-header justify-between bg-white/90 dark:bg-zinc-900/90 border-zinc-200 dark:border-zinc-800 transition-colors duration-300 shadow-sm dark:shadow-none">
             <div class="flex items-center gap-4">
@@ -328,7 +344,6 @@
         
     </div>
 
-    <x-exhausted-credits-modal />
 
     @stack('scripts')
 </body>

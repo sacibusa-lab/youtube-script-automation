@@ -54,6 +54,18 @@ PROMPT;
      */
     protected function getRoleDirective(string $roleSlug, array $context = []): string
     {
+        $niche = $context['niche'] ?? 'Generic';
+        $styleConstraint = '';
+
+        // Niche-specific style enforcement
+        if ($niche === 'US Wealth Logic') {
+            if ($roleSlug === 'artist') {
+                $styleConstraint = "- **STYLE (MANDATORY)**: Use 2D Flat Vector Illustration style. Clean lines, minimalist professional colors (Deep Blue, Forest Green, Pastel Yellow). Expressive characters with clear financial emotions.\n- **NO PHOTOREALISM**: Avoid photographic textures; aim for high-quality motion graphics aesthetic.";
+            } elseif ($roleSlug === 'narrator') {
+                $styleConstraint = "- **TONE (MANDATORY)**: Empathetic, calm, authoritative. Avoid financial hype or jargon. Speak like a mentor explaining math to a friend.";
+            }
+        }
+
         return match ($roleSlug) {
             'strategist' => <<<DIR
 You are the **Production Strategist**. Your expertise is in YouTube growth, CTR optimization, and retention science.
@@ -69,15 +81,17 @@ You are the **Lead Architect**. You are the master of world-building and "Bible 
 DIR,
             'narrator' => <<<DIR
 You are the **Main Narrator**. You are a master storyteller specializing in long-form "binge-worthy" content.
+{$styleConstraint}
 - Focus on pacing and "Emotional Spikes".
 - Use the "Show, Don't Tell" rule religiously.
 - Write natural, evocative dialogue and dense, atmospheric narration.
 DIR,
             'artist' => <<<DIR
-You are the **Visual Artist**. You are a professional cinematic photographer and prompt engineer.
-- Use technical specs: 85mm Prime, f/1.8, cinematic lighting, photorealistic 8K.
+You are the **Visual Artist**. You are a professional cinematic illustrator and prompt engineer.
+{$styleConstraint}
+- Technical specs (if not overridden by style): 85mm Prime, f/1.8, cinematic lighting.
 - Focus on high-tension compositions and clear emotional facial expressions.
-- Describe scenes with photographic precision to guide AI image generation.
+- Describe scenes with precision to guide AI generation.
 DIR,
             'discovery' => <<<DIR
 You are the **Discovery Engine**. You are a trend-spotter and creative ideator.
@@ -308,6 +322,14 @@ PROMPT;
     ): string {
         $directive = $this->getSystemDirective(['niche' => $niche, 'tier' => $tier]);
         
+        $styleInstruction = "400 words of flowing, photorealistic prose.";
+        $technicalSpecs = "photorealistic, 8K, cinematic lighting, 85mm Prime f/1.8, 16:9 widescreen";
+
+        if ($niche === 'US Wealth Logic') {
+            $styleInstruction = "400 words of flowing prose describing a high-quality 2D Flat Vector Illustration.";
+            $technicalSpecs = "2D vector illustration style, clean minimalist professional aesthetics, 16:9 widescreen, no photographic textures";
+        }
+
         return <<<PROMPT
 {$directive}
 
@@ -324,9 +346,9 @@ Generate the full narrative and visual architecture for this specific title.
 - High-stakes dichotomy. Ends on a cliffhanger.
 
 **2. THUMBNAIL PROMPT:**
-- 400 words of flowing, photorealistic prose.
+- {$styleInstruction}
 - Feature 2-3 characters (e.g., "Ethan Hayes, mid-twenties, crisp hotel uniform" vs "Mr. Sterling Vance, late 50s, charcoal grey suit").
-- Use: photorealistic, 8K, cinematic lighting, 85mm Prime f/1.8, 16:9 widescreen.
+- Use: {$technicalSpecs}.
 - Focus on emotional CTR (tears, shock, judgment, tension).
 
 **3. SHORT VIDEO SCRIPT PREVIEW (6-15s):**

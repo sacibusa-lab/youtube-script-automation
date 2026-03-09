@@ -14,6 +14,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
+
                 <span class="hidden sm:inline-flex px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-zinc-200 dark:border-zinc-700">{{ $project->niche }}</span>
                 <span class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border
                     {{ $project->status === 'waiting_for_title_selection' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800' : '' }}
@@ -45,8 +46,6 @@
             }
         @endphp
         <div class="max-w-7xl mx-auto mb-20" x-data="{ 
-            selectedStrategyIndex: @js($initialIndex),
-            strategies: @js($project->generatedTitles),
             strategies: @js($project->generatedTitles->map(fn($t) => [
                 'id' => $t->id,
                 'title' => $t->title,
@@ -56,10 +55,11 @@
                 'thumbnail_status' => $t->thumbnail_status,
                 'short_script' => $t->short_script
             ])),
-            selectedStrategyIndex: @js($project->generatedTitles->search(fn($t) => $t->title === $project->selected_title) ?: 0),
+            selectedStrategyIndex: @js($initialIndex ?? $project->generatedTitles->search(fn($t) => $t->title === $project->selected_title) ?: 0),
             isRegeneratingHook: false,
             isRegeneratingThumbnail: false,
             isLaunching: false,
+            pollIntervals: {},
             bookmarks: @js($project->generatedTitles->pluck('is_saved', 'title')),
             
             get currentStrategy() {
@@ -612,7 +612,7 @@
                                                     imageUrl: '{{ $scene->image_url }}' || null,
                                                     isGenerating: false,
                                                     pollInterval: null,
-                                                    generateImage() {
+                                                    async generateImage() {
                                                         this.imageUrl = null;
                                                         this.isGenerating = true;
                                                         // Trigger generation
