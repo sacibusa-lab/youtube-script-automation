@@ -59,10 +59,10 @@
             </div>
 
             <button 
-                @click="open = false" 
+                @click.prevent.stop="open = false" 
                 class="w-full py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-white transition-colors"
             >
-                Dismiss Command
+                Dismiss / Close
             </button>
         </div>
     </div>
