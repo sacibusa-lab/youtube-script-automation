@@ -243,6 +243,9 @@
                         // Start polling for this specific title
                         this.pollStatus(this.currentStrategy.id);
                     } else {
+                        if (data.trigger_modal) {
+                            window.dispatchEvent(new CustomEvent('open-credit-modal'));
+                        }
                         throw new Error(data.error || 'Failed to generate');
                     }
                 } catch (e) {
@@ -606,21 +609,29 @@
                                     <div class="w-full lg:w-64 xl:w-72 flex-shrink-0">
                                             <div class="aspect-video bg-zinc-100 dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative group/img">
                                                 <div class="w-full h-full" x-data="{
-                                                    imageUrl: '{{ $scene->image_url ? url($scene->image_url) : '' }}' || null,
+                                                    imageUrl: '{{ $scene->image_url }}' || null,
                                                     isGenerating: false,
                                                     pollInterval: null,
                                                     generateImage() {
                                                         this.imageUrl = null;
                                                         this.isGenerating = true;
                                                         // Trigger generation
-                                                        fetch('{{ route('projects.scenes.generate-image', [$project, $chapter, $scene]) }}', {
+                                                        const res = await fetch('{{ route('projects.scenes.generate-image', [$project, $chapter, $scene]) }}', {
                                                             method: 'POST',
                                                             headers: {
                                                                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                                                'Accept': 'application/json'
+                                                                'Accept': 'application/json',
+                                                                'Content-Type': 'application/json'
                                                             }
                                                         });
                                                         
+                                                        const data = await res.json().catch(() => ({}));
+                                                        if (data.trigger_modal || res.status === 402) {
+                                                            this.isGenerating = false;
+                                                            window.dispatchEvent(new CustomEvent('open-credit-modal'));
+                                                            return;
+                                                        }
+
                                                         // Start polling
                                                         this.pollImage();
                                                     },

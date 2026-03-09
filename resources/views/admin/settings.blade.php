@@ -102,13 +102,21 @@
                                     <label for="paystack_public_key" class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-3">Paystack Public Key</label>
                                     <input type="text" id="paystack_public_key" name="paystack_public_key" value="{{ old('paystack_public_key', $settings['paystack_public_key'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-mono transition-all" placeholder="pk_...">
                                 </div>
-                                <div>
+                                <div x-data="{ show: false }" class="relative">
                                     <label for="paystack_secret_key" class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-3">Paystack Private Key</label>
-                                    <input type="password" id="paystack_secret_key" name="paystack_secret_key" value="{{ old('paystack_secret_key', $settings['paystack_secret_key'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-mono transition-all" placeholder="sk_...">
+                                    <input :type="show ? 'text' : 'password'" id="paystack_secret_key" name="paystack_secret_key" value="{{ old('paystack_secret_key', $settings['paystack_secret_key'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-mono transition-all pr-12" placeholder="sk_...">
+                                    <button type="button" @click="show = !show" class="absolute right-4 top-[38px] text-gray-400 hover:text-teal-500 transition-colors">
+                                        <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        <svg x-show="show" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.254 0 2.415.279 3.447.778m3.933 3.933A9.978 9.978 0 0121.542 12c-1.274 4.057-5.064 7-9.542 7-1.254 0-2.415-.279-3.447-.778m3.933-3.933l.847.847m1.586 1.586l2.121 2.121M3 3l18 18"/></svg>
+                                    </button>
                                 </div>
-                                <div>
+                                <div x-data="{ show: false }" class="relative">
                                     <label for="paystack_webhook_secret" class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-3">Gateway Webhook Hash</label>
-                                    <input type="password" id="paystack_webhook_secret" name="paystack_webhook_secret" value="{{ old('paystack_webhook_secret', $settings['paystack_webhook_secret'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-mono transition-all">
+                                    <input :type="show ? 'text' : 'password'" id="paystack_webhook_secret" name="paystack_webhook_secret" value="{{ old('paystack_webhook_secret', $settings['paystack_webhook_secret'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-mono transition-all pr-12">
+                                    <button type="button" @click="show = !show" class="absolute right-4 top-[38px] text-gray-400 hover:text-teal-500 transition-colors">
+                                        <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        <svg x-show="show" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.254 0 2.415.279 3.447.778m3.933 3.933A9.978 9.978 0 0121.542 12c-1.274 4.057-5.064 7-9.542 7-1.254 0-2.415-.279-3.447-.778m3.933-3.933l.847.847m1.586 1.586l2.121 2.121M3 3l18 18"/></svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -136,9 +144,13 @@
                                         <label for="mail_username" class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-3">Station Username</label>
                                         <input type="text" id="mail_username" name="mail_username" value="{{ old('mail_username', $settings['mail_username'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-bold transition-all">
                                     </div>
-                                    <div>
+                                    <div x-data="{ show: false }" class="relative">
                                         <label for="mail_password" class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-3">Station Access Key</label>
-                                        <input type="password" id="mail_password" name="mail_password" value="{{ old('mail_password', $settings['mail_password'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-bold transition-all">
+                                        <input :type="show ? 'text' : 'password'" id="mail_password" name="mail_password" value="{{ old('mail_password', $settings['mail_password'] ?? '') }}" class="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm font-bold transition-all pr-12">
+                                        <button type="button" @click="show = !show" class="absolute right-4 top-[38px] text-gray-400 hover:text-teal-500 transition-colors">
+                                            <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            <svg x-show="show" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.254 0 2.415.279 3.447.778m3.933 3.933A9.978 9.978 0 0121.542 12c-1.274 4.057-5.064 7-9.542 7-1.254 0-2.415-.279-3.447-.778m3.933-3.933l.847.847m1.586 1.586l2.121 2.121M3 3l18 18"/></svg>
+                                        </button>
                                     </div>
                                 </div>
 

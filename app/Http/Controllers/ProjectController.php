@@ -81,6 +81,11 @@ class ProjectController extends Controller
              'duration_minutes' => 'required|integer|min:1|max:120',
         ]);
 
+        // 1.1 Check Credits (Approximate threshold for concepts + details)
+        if (Auth::user()->scriptCreditsBalance() < 200) {
+            return back()->withInput()->with('insufficient_credits', true);
+        }
+
         // 2. Get Related Models
         $niche = Niche::findOrFail($validated['niche_id']);
         
@@ -371,6 +376,11 @@ class ProjectController extends Controller
             return response()->json(['error' => 'No thumbnail concept exists to generate from.'], 400);
         }
 
+        // Check Credits
+        if (Auth::user()->imageTokensBalance() < 1 && Auth::user()->scriptCreditsBalance() < 50) {
+            return response()->json(['error' => 'INSUFFICIENT_CREDITS', 'trigger_modal' => true], 402);
+        }
+
         $title->update(['thumbnail_status' => 'generating']);
 
         // Directly dispatch the job
@@ -394,6 +404,14 @@ class ProjectController extends Controller
             return back()->with('error', 'No visual prompt exists for this scene.');
         }
 
+        // Check Credits
+        if (Auth::user()->imageTokensBalance() < 1 && Auth::user()->scriptCreditsBalance() < 50) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['error' => 'INSUFFICIENT_CREDITS', 'trigger_modal' => true], 402);
+            }
+            return back()->with('insufficient_credits', true);
+        }
+
         // Dispatch the single image job with null provider to allow resolution
         \App\Jobs\GenerateSingleImageJob::dispatch($scene, null);
 
@@ -414,7 +432,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'image_url' => $scene->image_url ? url($scene->image_url) : null,
+            'image_url' => $scene->image_url,
             'user_tokens' => [
                 'script_credits' => $user->scriptCreditsBalance(),
                 'image_tokens'   => $user->imageTokensBalance()

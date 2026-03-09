@@ -38,6 +38,11 @@ class AppServiceProvider extends ServiceProvider
             });
             View::share('siteSettings', $siteSettings);
 
+            // Share active top-up packages for the global credit modal
+            if (\Illuminate\Support\Facades\Schema::hasTable('topup_packages')) {
+                View::share('topupPackages', \App\Models\TopupPackage::where('is_active', true)->orderBy('credits', 'asc')->get());
+            }
+
             // Apply custom mail configuration if available
             if (!empty($siteSettings['mail_host'])) {
                 config([

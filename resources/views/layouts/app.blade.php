@@ -328,6 +328,8 @@
         
     </div>
 
+    <x-exhausted-credits-modal />
+
     @stack('scripts')
 </body>
 </html>
