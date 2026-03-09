@@ -37,6 +37,20 @@ class AppServiceProvider extends ServiceProvider
                 return [];
             });
             View::share('siteSettings', $siteSettings);
+
+            // Apply custom mail configuration if available
+            if (!empty($siteSettings['mail_host'])) {
+                config([
+                    'mail.default' => 'smtp',
+                    'mail.mailers.smtp.host' => $siteSettings['mail_host'],
+                    'mail.mailers.smtp.port' => $siteSettings['mail_port'] ?? 587,
+                    'mail.mailers.smtp.username' => $siteSettings['mail_username'] ?? null,
+                    'mail.mailers.smtp.password' => $siteSettings['mail_password'] ?? null,
+                    'mail.mailers.smtp.encryption' => ($siteSettings['mail_encryption'] === 'null' ? null : ($siteSettings['mail_encryption'] ?? 'tls')),
+                    'mail.from.address' => $siteSettings['mail_from_address'] ?? config('mail.from.address'),
+                    'mail.from.name' => $siteSettings['mail_from_name'] ?? config('mail.from.name'),
+                ]);
+            }
         } catch (\Exception $e) {
             // Failsafe if DB isn't ready
             View::share('siteSettings', []);

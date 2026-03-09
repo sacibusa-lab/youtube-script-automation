@@ -28,6 +28,8 @@ class SettingController extends Controller
         $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp,ico|max:1024',
+            'mail_port' => 'nullable|numeric',
+            'mail_from_address' => 'nullable|email',
         ]);
 
         $data = $request->except(['_token', '_method', 'logo', 'favicon']);
