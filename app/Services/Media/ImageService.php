@@ -337,11 +337,14 @@ class ImageService
                 foreach ($content as $part) {
                     $type = $part['type'] ?? '';
                     if ($type === 'image' || $type === 'image_base64') {
-                        $b64 = $part['image_base64'] ?? $part['data'] ?? null;
+                        $b64 = $part['image_base64'] ?? $part['data'] ?? $part['image_url']['url'] ?? null;
+                        if ($b64 && str_starts_with($b64, 'data:')) {
+                            $b64 = preg_replace('#^data:[^;]+;base64,#', '', $b64);
+                        }
                         if ($b64) return $this->saveBase64Image($b64, $folder);
                     }
-                    if ($type === 'image_url') {
-                        $url = $part['image_url']['url'] ?? null;
+                    if ($type === 'image_url' || isset($part['image_url'])) {
+                        $url = $part['image_url']['url'] ?? $part['url'] ?? null;
                         if ($url) {
                             if (str_starts_with($url, 'data:')) {
                                 $b64 = preg_replace('#^data:[^;]+;base64,#', '', $url);
@@ -357,9 +360,16 @@ class ImageService
                 }
             }
 
-            // ── 4️⃣  content as plain string URL ──
-            if (is_string($content) && filter_var(trim($content), FILTER_VALIDATE_URL)) {
-                return $this->saveRemoteImage(trim($content), $folder);
+            // ── 4️⃣  content as plain string URL or Data URI ──
+            if (is_string($content)) {
+                $trimmed = trim($content);
+                if (filter_var($trimmed, FILTER_VALIDATE_URL)) {
+                    return $this->saveRemoteImage($trimmed, $folder);
+                }
+                if (str_starts_with($trimmed, 'data:image/')) {
+                    $b64 = preg_replace('#^data:[^;]+;base64,#', '', $trimmed);
+                    return $this->saveBase64Image($b64, $folder);
+                }
             }
 
             // ── 5️⃣  top-level data[] (DALL-E / OpenAI images endpoint style) ──

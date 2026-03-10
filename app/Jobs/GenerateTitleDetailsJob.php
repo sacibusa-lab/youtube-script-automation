@@ -11,11 +11,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Traits\HandlesAIResponses;
 use Illuminate\Support\Facades\Log;
 
 class GenerateTitleDetailsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, HandlesAIResponses;
 
     public $tries = 3;
     public $timeout = 300;
@@ -47,8 +48,7 @@ class GenerateTitleDetailsJob implements ShouldQueue
 
             $response = $aiManager->generate($prompt, [], $this->video->user_id, 'strategies', $this->video->id);
             
-            $responseData = json_decode($response->content, true);
-            $content = $responseData['content'] ?? $responseData;
+            $content = $this->parseAIJSON($response->content);
 
             // Extract logic
             $megaHook = $content['mega_hook'] ?? null;

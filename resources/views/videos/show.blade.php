@@ -431,11 +431,39 @@
             $statusesToHideChapters = ['waiting_for_concept_selection', 'waiting_for_strategy_selection', 'waiting_for_title_selection', 'generating_concept_details', 'waiting_for_launch', 'failed_stage_2'];
         @endphp
         <div class="" 
-             x-show="!@js($statusesToHideChapters).includes('{{ $project->status }}') && '{{ $project->status }}' !== 'generating_concept_details'"
              x-data="{ 
-                activeTab: parseInt(localStorage.getItem('project_{{ $project->id }}_activeTab')) || 1 
+                statusesToHide: {{ json_encode($statusesToHideChapters) }},
+                activeTab: parseInt(localStorage.getItem('project_{{ $project->id }}_activeTab')) || 1,
+                async submitAction(actionUrl, chapterId, type) {
+                    this.$dispatch('notify', { detail: { message: `Engine Engaged: ${type}...`, type: 'info' } });
+                    
+                    try {
+                        const res = await fetch(actionUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            window.location.reload(); 
+                        } else {
+                            throw new Error(data.message || 'Action failed');
+                        }
+                    } catch (e) {
+                        this.$dispatch('notify', { detail: { message: e.message, type: 'error' } });
+                        return false;
+                    }
+                }
              }"
+             x-show="!statusesToHide.includes('{{ $project->status }}') && '{{ $project->status }}' !== 'generating_concept_details'"
              x-init="$watch('activeTab', val => localStorage.setItem('project_{{ $project->id }}_activeTab', val))">
+            
+            @if($project->chapters->where('status', 'generating')->isNotEmpty())
+                <meta http-equiv="refresh" content="5">
+            @endif
             
             <!-- System Diagnostics (Loading / Failed) -->
             @if(in_array($project->status, ['pending', 'failed', 'generating_concepts', 'generating_strategies', 'generating_concept_details', 'architecting_chapters', 'generating_structure', 'generating_monthly_plan']))
@@ -566,26 +594,38 @@
                                 <h2 class="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">{{ $chapter->title }}</h2>
                             </div>
                             @if($chapter->status === 'pending')
-                                <form action="{{ route('projects.chapters.architect', [$project, $chapter]) }}" method="POST" x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
-                                    @csrf
-                                    <button type="submit" 
+                                <div x-data="{ isSubmitting: false }">
+                                    <button type="button" 
+                                            @click="isSubmitting = true; if(!await submitAction('{{ route('projects.chapters.architect', [$project, $chapter]) }}', {{ $chapter->id }}, 'Architecting')) isSubmitting = false;"
                                             :disabled="isSubmitting"
-                                            class="bg-zinc-900 dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-md whitespace-nowrap flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:active:scale-100">
+                                            class="bg-zinc-900 dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-md whitespace-nowrap flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed">
                                         <span x-show="!isSubmitting">Architect Chapter {{ $chapter->chapter_number }}</span>
                                         <span x-show="isSubmitting" style="display: none;" class="flex items-center gap-2 italic">
                                             <svg class="animate-spin h-3.5 w-3.5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             Architecting...
                                         </span>
                                     </button>
-                                </form>
+                                </div>
                             @elseif($chapter->status === 'completed')
-                                <form action="{{ route('projects.chapters.approve', [$project, $chapter]) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="bg-teal-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-teal-600 active:scale-95 transition-all shadow-md whitespace-nowrap flex items-center gap-2">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                        Authorize Phase
+                                <div x-data="{ isSubmitting: false }">
+                                    <button type="button" 
+                                            @click="isSubmitting = true; if(!await submitAction('{{ route('projects.chapters.approve', [$project, $chapter]) }}', {{ $chapter->id }}, 'Authorizing')) isSubmitting = false;"
+                                            :disabled="isSubmitting"
+                                            class="bg-teal-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-teal-600 active:scale-95 transition-all shadow-md whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-50">
+                                        <template x-if="!isSubmitting">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                                <span>Authorize Phase</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="isSubmitting">
+                                            <div class="flex items-center gap-2 italic">
+                                                <svg class="animate-spin h-3.5 w-3.5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                <span>Authorizing...</span>
+                                            </div>
+                                        </template>
                                     </button>
-                                </form>
+                                </div>
                             @elseif($chapter->status === 'approved')
                                 <span class="flex items-center gap-2 text-teal-500 text-[11px] font-black uppercase tracking-widest">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -707,12 +747,18 @@
                                 </div>
                                 <h3 class="text-2xl font-black text-zinc-800 dark:text-zinc-200 italic mb-3" style="font-family: Georgia, serif;">Chapter Script Needed</h3>
                                 <p class="text-zinc-400 text-sm mb-10 leading-relaxed">Architect this chapter to contribute to your {{ $project->duration_minutes }}-hour<br>marathon goal.</p>
-                                <form action="{{ route('projects.chapters.architect', [$project, $chapter]) }}" method="POST" class="w-full max-w-sm">
-                                    @csrf
-                                    <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-rose-600/20 hover:shadow-rose-600/40 hover:-translate-y-0.5 active:scale-95 transition-all">
-                                        ARCHITECT CHAPTER {{ $chapter->chapter_number }} (300W/SCENE)
+                                <div x-data="{ isSubmitting: false }">
+                                    <button type="button" 
+                                            @click="isSubmitting = true; if(!await submitAction('{{ route('projects.chapters.architect', [$project, $chapter]) }}', {{ $chapter->id }}, 'Architecting')) isSubmitting = false;"
+                                            :disabled="isSubmitting"
+                                            class="w-full bg-rose-600 hover:bg-rose-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-rose-600/20 hover:shadow-rose-600/40 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                        <span x-show="!isSubmitting">ARCHITECT CHAPTER {{ $chapter->chapter_number }} (300W/SCENE)</span>
+                                        <span x-show="isSubmitting" style="display: none;" class="flex items-center gap-2 italic">
+                                            <svg class="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Architecting Chapter...
+                                        </span>
                                     </button>
-                                </form>
+                                </div>
                             </div>
 
                         @elseif($chapter->status === 'generating')

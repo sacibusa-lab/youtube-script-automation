@@ -12,11 +12,12 @@ use App\Models\Video;
 use App\Models\Chapter;
 use App\Models\Scene;
 use App\Services\AI\AIServiceInterface;
+use App\Traits\HandlesAIResponses;
 use Illuminate\Support\Facades\Log;
 
 class GenerateScenePromptsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, HandlesAIResponses;
 
     public $tries = 5;
     public $timeout = 600;
@@ -53,8 +54,10 @@ class GenerateScenePromptsJob implements ShouldQueue
 
             $response = $aiManager->generate($prompt, [], $this->video->user_id, 'scenes', $this->video->id);
             
-            $responseData = json_decode($response->content, true);
-            $scenePrompts = $responseData['content']['scenes'] ?? $this->parseLegacyBackup($response->content);
+            $scenePrompts = $this->parseAIJSON($response->content);
+            if (isset($scenePrompts['scenes'])) {
+                $scenePrompts = $scenePrompts['scenes'];
+            }
 
             foreach (($scenePrompts ?? []) as $promptData) {
                 $scene = Scene::where('video_id', $this->video->id)
@@ -85,20 +88,5 @@ class GenerateScenePromptsJob implements ShouldQueue
             Log::error("Scene prompt generation failed", ['error' => $e->getMessage()]);
             $this->fail($e);
         }
-    }
-
-    protected function parseLegacyBackup(string $content): array
-    {
-        $cleanContent = preg_replace('/^```json\s*|\s*```$/', '', trim($content));
-        $data = json_decode($cleanContent, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            if (preg_match('/\{.*\}/s', $content, $matches)) {
-                $data = json_decode($matches[0], true);
-            }
-        }
-
-        $contentData = $data['content'] ?? $data;
-        return $contentData['scenes'] ?? $contentData;
     }
 }

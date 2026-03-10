@@ -13,10 +13,11 @@ use App\Models\Chapter;
 use App\Services\AI\AIServiceInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Bus;
+use App\Traits\HandlesAIResponses;
 
 class GenerateVideoStructureJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, HandlesAIResponses;
 
     public $tries = 5;
     public $timeout = 600;
@@ -57,8 +58,8 @@ class GenerateVideoStructureJob implements ShouldQueue
 
             $response = $aiManager->generate($prompt, [], $this->video->user_id, 'structure', $this->video->id);
             
-            $responseData = json_decode($response->content, true);
-            $structure = $responseData['content'] ?? $this->parseLegacyBackup($response->content);
+            $content = $this->parseAIJSON($response->content);
+            $structure = $content;
 
             // BIBLE LOGIC & VALIDATION
             $bible = $structure['bible'] ?? null;
@@ -147,19 +148,5 @@ class GenerateVideoStructureJob implements ShouldQueue
             $this->video->update(['status' => 'failed']);
             $this->fail($e);
         }
-    }
-
-    protected function parseLegacyBackup(string $content): array
-    {
-        $cleanContent = preg_replace('/^```json\s*|\s*```$/', '', trim($content));
-        $data = json_decode($cleanContent, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            if (preg_match('/\{.*\}/s', $content, $matches)) {
-                $data = json_decode($matches[0], true);
-            }
-        }
-
-        return is_array($data) ? ($data['content'] ?? $data) : [];
     }
 }

@@ -10,11 +10,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Traits\HandlesAIResponses;
 use Illuminate\Support\Facades\Log;
 
 class GenerateThumbnailPromptJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, HandlesAIResponses;
 
     public $tries = 3;
     public $timeout = 300;
@@ -42,8 +43,7 @@ class GenerateThumbnailPromptJob implements ShouldQueue
 
             $response = $aiManager->generate($prompt, [], $this->video->user_id, 'thumbnail_engine', $this->video->id);
             
-            $responseData = json_decode($response->content, true);
-            $data = $responseData['content'] ?? $this->parseLegacyBackup($response->content);
+            $data = $this->parseAIJSON($response->content);
 
             if (!$data || !isset($data['prompt_data'])) {
                 throw new \Exception("AI failed to return valid detailed prompt data.");
@@ -73,19 +73,5 @@ class GenerateThumbnailPromptJob implements ShouldQueue
             $this->video->update(['status' => 'failed']);
             $this->fail($e);
         }
-    }
-
-    protected function parseLegacyBackup(string $content): array
-    {
-        $cleanContent = preg_replace('/^```json\s*|\s*```$/', '', trim($content));
-        $data = json_decode($cleanContent, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            if (preg_match('/\{.*\}/s', $content, $matches)) {
-                $data = json_decode($matches[0], true);
-            }
-        }
-
-        return is_array($data) ? ($data['content'] ?? $data) : [];
     }
 }

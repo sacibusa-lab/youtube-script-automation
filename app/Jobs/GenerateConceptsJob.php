@@ -13,9 +13,11 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
+use App\Traits\HandlesAIResponses;
+
 class GenerateConceptsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, HandlesAIResponses;
 
     public $tries = 5;
     public $timeout = 600;
@@ -52,24 +54,14 @@ class GenerateConceptsJob implements ShouldQueue
 
             $response = $aiManager->generate($prompt, [], $this->video->user_id, 'strategies', $this->video->id);
             
-            $responseData = json_decode($response->content, true);
-            $content = $responseData['content'] ?? $responseData;
+            $content = $this->parseAIJSON($response->content);
             
             // Comprehensive Strategy Extraction Logic
-            if (is_string($content)) {
-                $strategies = $this->parseLegacyBackup($content);
-            } else {
+            if (is_array($content)) {
                 // Try strategies, then titles, then flat array
-                $strategies = $content['strategies'] ?? $content['titles'] ?? $content['concepts'] ?? [];
-            }
-
-            // Fallback for flat arrays or nested content
-            if (empty($strategies) && is_array($content)) {
-                if (isset($content['content']['strategies'])) {
-                    $strategies = $content['content']['strategies'];
-                } elseif (isset($content[0]['title'])) {
-                    $strategies = $content;
-                }
+                $strategies = $content['strategies'] ?? $content['titles'] ?? $content['concepts'] ?? $content;
+            } else {
+                $strategies = [];
             }
 
             // Update Video model with strategies
@@ -95,22 +87,5 @@ class GenerateConceptsJob implements ShouldQueue
             $this->video->update(['status' => 'failed']);
             $this->fail($e);
         }
-    }
-
-    /**
-     * Fallback for legacy or malformed responses
-     */
-    protected function parseLegacyBackup(string $content): array
-    {
-        $cleanContent = preg_replace('/^```json\s*|\s*```$/', '', trim($content));
-        $data = json_decode($cleanContent, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            if (preg_match('/\{.*\}/s', $content, $matches)) {
-                $data = json_decode($matches[0], true);
-            }
-        }
-
-        return is_array($data) ? ($data['content'] ?? $data) : [];
     }
 }

@@ -850,10 +850,11 @@ PROMPT;
      */
     public function buildThumbnailPrompt(
         string $selectedTitle,
-        string $emotionalDriver,
+        string|null $emotionalDriver,
         string $primaryConflict,
         string $tier = 'PRO'
     ): string {
+        $emotionalDriver = $emotionalDriver ?? 'Curiosity, aspiration, and urgency';
         $directive = $this->getSystemDirective(['tier' => $tier]);
 
         return <<<PROMPT

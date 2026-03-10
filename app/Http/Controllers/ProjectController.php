@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\GenerateConceptsJob;
 use App\Jobs\GenerateVideoStructureJob;
+use App\Traits\HandlesAIResponses;
 
 class ProjectController extends Controller
 {
+    use HandlesAIResponses;
     /**
      * Display a listing of the resource.
      */
@@ -309,11 +311,25 @@ class ProjectController extends Controller
         $aiManager = app(\App\Services\AI\AIManager::class);
         $promptBuilder = app(\App\Services\AI\PromptBuilder::class);
 
-        $prompt = $promptBuilder->buildMegaHookPrompt($title->title, $project->niche, $project->tier1_country);
+        $prompt = $promptBuilder->buildSingleHookPrompt(
+            topic: $project->topic ?? $title->title,
+            niche: $project->niche,
+            tier1Country: $project->tier1_country ?? 'US',
+            title: $title->title
+        );
         
         try {
             $response = $aiManager->generate($prompt, [], $project->user_id, 'hook', $project->id);
-            $content = json_decode($response->content, true)['content'] ?? $response->content;
+            $content = $this->parseAIJSON($response->content);
+            
+            // If it's a Mega Hook, it might be a direct string or in long format
+            if (is_array($content) && isset($content['hook'])) {
+                $content = $content['hook'];
+            } elseif (is_array($content) && isset($content['mega_hook'])) {
+                $content = $content['mega_hook'];
+            } elseif (is_array($content)) {
+                $content = json_encode($content);
+            }
             
             $title->update(['mega_hook' => $content]);
 
@@ -345,11 +361,24 @@ class ProjectController extends Controller
         $aiManager = app(\App\Services\AI\AIManager::class);
         $promptBuilder = app(\App\Services\AI\PromptBuilder::class);
 
-        $prompt = $promptBuilder->buildThumbnailPrompt($title->title, $title->mega_hook, $project->niche);
+        $prompt = $promptBuilder->buildThumbnailPrompt(
+            selectedTitle: $title->title,
+            emotionalDriver: $title->mega_hook ?? '',
+            primaryConflict: $project->niche
+        );
         
         try {
             $response = $aiManager->generate($prompt, [], $project->user_id, 'thumbnail', $project->id);
-            $content = json_decode($response->content, true)['content'] ?? $response->content;
+            $content = $this->parseAIJSON($response->content);
+            
+            // If it's a Thumbnail Prompt, it might be in 'thumbnail' or 'thumbnail_concept'
+            if (is_array($content) && isset($content['thumbnail'])) {
+                $content = $content['thumbnail'];
+            } elseif (is_array($content) && isset($content['thumbnail_concept'])) {
+                $content = $content['thumbnail_concept'];
+            } elseif (is_array($content)) {
+                $content = json_encode($content);
+            }
             
             $title->update(['thumbnail_concept' => $content]);
 
@@ -565,8 +594,18 @@ class ProjectController extends Controller
         // Load all chapters for prompt context
         $allChapters = $project->chapters->toArray();
 
+        // Set status to generating immediately so the UI reflects it
+        $chapter->update(['status' => 'generating']);
+
         // Dispatch background job for chapter narration
         \App\Jobs\GenerateChapterNarrationJob::dispatch($project, $chapter, $allChapters);
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Architecting Chapter {$chapter->chapter_number}..."
+            ]);
+        }
 
         return back()->with('success', "Architecting Chapter {$chapter->chapter_number}...");
     }
@@ -587,6 +626,13 @@ class ProjectController extends Controller
         
         if ($allApproved) {
             $project->update(['status' => 'completed']);
+        }
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Chapter {$chapter->chapter_number} approved and locked!"
+            ]);
         }
 
         return back()->with('success', "Chapter {$chapter->chapter_number} approved and locked!");

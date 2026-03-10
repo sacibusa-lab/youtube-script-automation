@@ -14,10 +14,11 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Traits\HandlesAIResponses;
 
 class GenerateChapterNarrationJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, HandlesAIResponses;
 
     public $tries = 5;
     public $timeout = 600;
@@ -60,8 +61,7 @@ class GenerateChapterNarrationJob implements ShouldQueue
 
             $response = $aiManager->generate($prompt, [], $this->video->user_id, 'narration', $this->video->id);
             
-            $responseData = json_decode($response->content, true);
-            $narrationData = $responseData['content'] ?? $this->parseLegacyBackup($response->content);
+            $narrationData = $this->parseAIJSON($response->content);
 
             $scenes = [];
             foreach (($narrationData['scenes'] ?? []) as $sceneData) {
@@ -92,19 +92,5 @@ class GenerateChapterNarrationJob implements ShouldQueue
             Log::error("Chapter narration failed", ['error' => $e->getMessage()]);
             $this->fail($e);
         }
-    }
-
-    protected function parseLegacyBackup(string $content): array
-    {
-        $cleanContent = preg_replace('/^```json\s*|\s*```$/', '', trim($content));
-        $data = json_decode($cleanContent, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            if (preg_match('/\{.*\}/s', $content, $matches)) {
-                $data = json_decode($matches[0], true);
-            }
-        }
-
-        return is_array($data) ? ($data['content'] ?? $data) : [];
     }
 }
