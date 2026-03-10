@@ -36,7 +36,8 @@ class NicheTemplateService
             'Conspiracy' => 'Hidden truth, cover-up, "what they don\'t want you to know", secret societies, suppressed discovery. Documentary/faceless: "The [Subject] They Tried To Bury — What One Researcher Found", "Why [Institution] Never Wanted This Made Public", "The Discovery That Changed Everything — And Was Hidden For [X] Years". Era-based when century chosen (1400s to present).',
             'Adventure' => 'Exploration, expedition, lost place, treasure, survival in unknown land. "The Expedition That Found [X]", "What They Discovered In The [Place] No One Returned From", "Lost For [X] Years — What They Brought Back". Era-based (century selection); can blend historical and discovery.',
             'Discovery' => 'Scientific or historical breakthrough, lost civilization, artifact, "what was really there". "The [Discovery] That Rewrote History", "What They Found Under [Place] After [X] Years", "The Truth About [Subject] — Finally Revealed". Era-based (century); factual, documentary tone.',
-            'US Wealth Logic' => 'Financial empathy, "boring but rich" math, curiosity gaps for retirement/frugality. Alicia-style: "Why Looking Poor is SO Important", "The 401k Trap No One Tells You", "How I Retired at 35 on a Normal Salary". Empathetic, calm, authoritative tone.',
+            'US Wealth Logic' => 'Financial empathy, "boring but rich" math, 2026 architecture for retirement/frugality. Alicia-style: "Why Looking Poor is the 2026 Wealth Hack", "The 401k Trap No One Tells You (2027 Update)", "How I Retired at 35 on a Normal Salary". Empathetic, calm, authoritative tone.',
+            'Business & Wealth' => 'High-stakes success stories, billionaire math, 2026/2027 market trends. "The Billionaire Who Lived Like a Pauper", "Why the 2026 Market Shift Changes Everything", "How to Build a 100-Year Legacy". Authority, prestige, high CPM focus.',
         ];
 
         return $guidance[$niche] ?? 'Emotional hooks, curiosity gap, "what happened next", faceless story style: dramatic, click-worthy, no face in thumbnail.';
@@ -283,15 +284,27 @@ class NicheTemplateService
             ],
             'US Wealth Logic' => [
                 'titles' => [
-                    'The 401(k) Trap That Keeps You Middle Class — What They Never Told You',
-                    'Why Looking Poor Is The Ultimate Wealth Cheat Code',
+                    'The 401(k) Trap That Keeps You Middle Class — What They Never Told You (2026)',
+                    'Why Looking Poor Is The Ultimate 2026 Wealth Cheat Code',
                     'Boring But Rich: The Math Behind Retiring In 10 Years',
                     'The Truth About Social Security: Why Most People Fail At 67',
-                    'How To Save \$1 Million On A Normal Salary (Step By Step)'
+                    'How To Save $1 Million On A Normal Salary in 2026'
                 ],
-                'openingStyle' => 'In a world where everyone is racing to look rich, the real winners are often hiding in plain sight. They don\'t drive the newest cars or wear the latest brands. Instead, they understand a simple logic that most people ignore until it\'s too late. Today, we\'re breaking down the exact math behind how "boring" habits lead to extraordinary freedom. This is the truth about building wealth in America.',
-                'storyBeats' => "US WEALTH LOGIC STORY BEATS (Empathetic, deep-dive financial storytelling):\n1. THE STATUS QUO: Describe a common financial habit that feels \"right\" but is actually a trap (e.g., maxing 401k without a plan, lifestyle creep). Character-led example (e.g., \"Meet David, earning \$85k but feels broke\").\n2. THE REVEAL: Introduce the \"Wealth Logic\" concept. Contrast the \"Rich\" vs \"Wealthy\" mindset. Use specific math (compound interest, tax implications, inflation).\n3. THE PERSONA: Introduce the \"Mascot\" (Alicia-style) who navigates these concepts. She visits a financial advisor, a successful \"boring rich\" neighbor, or a struggling peer.\n4. THE ACTIONABLE PLAN: Break down the solution into steps. Visual aids (charts, simple math) mentioned in narration. Focus on long-term freedom over short-term flash.\n5. THE CONCLUSION: Emotional call to action. Reflection on what \"enough\" really means. End with a curiosity loop for the next video.",
+                'openingStyle' => 'In a world where everyone is racing to look rich, the real winners in 2026 are often hiding in plain sight. They don\'t drive the newest cars or wear the latest brands. Instead, they understand a simple logic that most people ignore until it\'s too late. Today, we\'re breaking down the exact math behind how "boring" habits lead to extraordinary freedom in the 2020s. This is the truth about building wealth in America.',
+                'storyBeats' => "US WEALTH LOGIC STORY BEATS (Empathetic, deep-dive financial storytelling):\n1. THE STATUS QUO: Describe a common financial habit that feels \"right\" but is actually a trap (e.g., maxing 401k without a plan, lifestyle creep in 2026). Character-led example (e.g., \"Meet David, earning \$85k but feels broke\").\n2. THE REVEAL: Introduce the \"Wealth Logic\" concept. Contrast the \"Rich\" vs \"Wealthy\" mindset. Use specific math (compound interest, tax implications for 2026, inflation).\n3. THE PERSONA: Introduce the \"Mascot\" (Alicia-style) who navigates these concepts. She visits a financial advisor, a successful \"boring rich\" neighbor, or a struggling peer.\n4. THE ACTIONABLE PLAN: Break down the solution into steps relevant for the current economic climate. Visual aids (charts, simple math) mentioned in narration.\n5. THE CONCLUSION: Emotional call to action. Reflection on what \"enough\" really means in 2026 and beyond. End with a curiosity loop.",
                 'thumbnailStyle' => "US WEALTH LOGIC THUMBNAIL: (1) CONTRAST: High-end luxury car vs a reliable older sedan with text \"RICH vs WEALTHY\". (2) CHARTS: Simple bar chart showing \"Start \$0\" to \"Finish \$1.5M\" with Alicia looking surprised/confident. (3) 2D FLAT VECTOR ANIMATION STYLE: Clean lines, vibrant but professional colors (blues, greens, yellows), expressive characters. Photorealistic 8K prompt but explicitly stating \"2D Vector Illustration style\"."
+            ],
+            'Business & Wealth' => [
+                'titles' => [
+                    'The Billionaire Who Lived Like a Pauper — 2026 Secret Revealed',
+                    'Why the 2026 Market Shift Changes Everything For Small Investors',
+                    'How to Build a 100-Year Legacy Starting with $1,000',
+                    'The "Rich Dad" Alternative for 2026: New Wealth Rules',
+                    'Escape the 9-5 Rat Race with This 2026 Success Strategy'
+                ],
+                'openingStyle' => 'By 2026, the old rules of money have been shattered. What worked for your parents won\'t work for you. In a world of digital assets and shifting markets, the truly wealthy are playing a different game entirely. They aren\'t chasing trends; they\'re building empires on simple, unbreakable logic. Today, we reveal the blueprint for building wealth that lasts generations.',
+                'storyBeats' => "BUSINESS & WEALTH STORY BEATS (High-stakes authority and market logic):\n1. THE HOOK: A startling fact about current wealth or a \"rich person secret\". Use 2026 context.\n2. THE LEGACY: Historical context meeting future trends. How empires are built.\n3. THE STRATEGY: Breakdown of high-level wealth building (real estate, compounding, business equity).\n4. THE WARNING: What the 99% are doing wrong in 2026.\n5. THE VISION: Looking ahead to 2030 and beyond. Financial freedom blueprint.",
+                'thumbnailStyle' => "BUSINESS & WEALTH THUMBNAIL: (1) Premium office setting with 2-3 professionals in high-end suits; (2) Split: 1920s wealth vs 2026 wealth; (3) Bold text: 2026 WEALTH RULES. Cinematic, 8K, 16:9."
             ],
         ];
     }

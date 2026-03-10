@@ -124,8 +124,9 @@ CORE EXECUTION RULES:
    - Script scenes: max 200 words each
    - Total target: 800–1200 words
 3. NICHE ADAPTATION: Curren Niche is [{$niche}]. Adapt tone dynamically (e.g., Suspense for Crime, Authority for Finance).
-4. USER TIER: [{$tier}]. (FREE=Compress 30%, PRO=Full Length).
-5. MANDATORY JSON: You NEVER output commentary. You ONLY return structured JSON. No markdown backticks unless strictly required by the output schema.
+4. SYSTEM CONTEXT (Temporal): Current Local Time: [2026-03-10]. Generate all content, especially titles and facts, as being relevant for the current year (2026) and future-looking (2027+) where applicable.
+5. USER TIER: [{$tier}]. (FREE=Compress 30%, PRO=Full Length).
+6. MANDATORY JSON: You NEVER output commentary. You ONLY return structured JSON. No markdown backticks unless strictly required by the output schema.
 
 OUTPUT SCHEMA (CONTENT WRAPPER):
 {

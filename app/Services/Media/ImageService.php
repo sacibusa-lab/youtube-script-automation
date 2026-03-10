@@ -4,6 +4,7 @@ namespace App\Services\Media;
 
 use App\Services\Integration\APIGatewayService;
 use App\Services\AI\PromptBuilder;
+use App\Services\AI\CharacterService;
 use App\Models\Scene;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,11 +13,13 @@ class ImageService
 {
     protected APIGatewayService $gateway;
     protected PromptBuilder $promptBuilder;
+    protected CharacterService $characterService;
 
-    public function __construct(APIGatewayService $gateway, PromptBuilder $promptBuilder)
+    public function __construct(APIGatewayService $gateway, PromptBuilder $promptBuilder, CharacterService $characterService)
     {
         $this->gateway = $gateway;
         $this->promptBuilder = $promptBuilder;
+        $this->characterService = $characterService;
     }
 
     /**
@@ -88,10 +91,19 @@ class ImageService
         }
 
         // 1. Resolve the base text prompt
-        // If it's a Scene model, we can use the prompt builder logic
         if ($sceneOrPrompt instanceof \App\Models\Scene) {
             $prompt = $this->promptBuilder->buildImagePrompt($sceneOrPrompt, $sceneOrPrompt->character_references ?? []);
-        } 
+
+            // Auto-inject Global Character Library DNA based on names found in narration
+            $libraryContext = $this->characterService->autoDetectCharactersFromNarration(
+                $userId,
+                $sceneOrPrompt->narration_text ?? ''
+            );
+            if ($libraryContext) {
+                $prompt .= $libraryContext;
+                Log::info("ImageService: Character Library DNA injected for scene #{$sceneOrPrompt->scene_number}");
+            }
+        }
         // If it's a GeneratedTitle model, fetch the thumbnail config
         elseif ($sceneOrPrompt instanceof \App\Models\GeneratedTitle) {
             $prompt = $sceneOrPrompt->thumbnail_concept ?? 'Cinematic youtube thumbnail';

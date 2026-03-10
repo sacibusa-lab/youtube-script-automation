@@ -24,6 +24,7 @@ Route::get('/generator', [\App\Http\Controllers\GeneratorController::class, 'ind
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Payments & Subscriptions
@@ -59,6 +60,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/titles/{title}/generate-image', [ProjectController::class, 'generateThumbnailImage'])->name('projects.titles.generate-image');
     Route::get('/projects/{project}/studio', [ProjectController::class, 'studio'])->name('projects.studio');
     Route::post('/projects/{project}/studio/save', [ProjectController::class, 'saveStudioState'])->name('projects.studio.save');
+
+    // Character Library
+    Route::resource('characters', \App\Http\Controllers\CharacterController::class);
+    Route::get('/api/characters', [\App\Http\Controllers\CharacterController::class, 'apiList'])->name('characters.api-list');
 
     // User Analytics
     Route::get('/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics');
