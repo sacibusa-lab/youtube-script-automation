@@ -139,4 +139,23 @@ class User extends Authenticatable
     {
         return (bool) $this->is_admin;
     }
+
+    public function scriptCreditsFuelPercentage(): float
+    {
+        if ($this->total_credits <= 0) return 0;
+        return ($this->scriptCreditsBalance() / $this->total_credits) * 100;
+    }
+
+    public function imageTokensFuelPercentage(): float
+    {
+        if ($this->total_image_tokens <= 0) return 0;
+        return ($this->imageTokensBalance() / $this->total_image_tokens) * 100;
+    }
+
+    public function isLowOnCredits(): bool
+    {
+        // Low is defined as <= 10% on either script or image tokens
+        return ($this->scriptCreditsFuelPercentage() <= 10 && $this->total_credits > 0) || 
+               ($this->imageTokensFuelPercentage() <= 10 && $this->total_image_tokens > 0);
+    }
 }

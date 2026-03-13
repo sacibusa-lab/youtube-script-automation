@@ -20,9 +20,6 @@
                         {{ __('Characters') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')">
-                        {{ __('Profile') }}
-                    </x-nav-link>
                     
                     @if(Auth::user()->isAdmin())
                     <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
@@ -132,9 +129,6 @@
                 {{ __('Characters') }}
             </x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')">
-                {{ __('Profile') }}
-            </x-responsive-nav-link>
             
             @if(Auth::user()->isAdmin())
             <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">

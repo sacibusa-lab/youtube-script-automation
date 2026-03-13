@@ -180,6 +180,11 @@
                 <span>My Analytics</span>
             </a>
 
+            <a href="{{ route('profile.edit') }}" class="sidebar-link {{ request()->routeIs('profile.edit') ? 'active' : '' }} gap-3.5">
+                <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span>My Profile</span>
+            </a>
+
             @if(Auth::user()->isAdmin())
                 <p class="px-4 text-[10px] font-black text-red-500/60 dark:text-red-400/60 uppercase tracking-[0.2em] mb-3 mt-6">Administrative Panel</p>
 
@@ -224,16 +229,18 @@
         <!-- Profile -->
         <div class="mt-auto pt-4 border-t border-gray-300 dark:border-gray-700">
              <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700">
-                <div class="w-10 h-10 rounded-full bg-teal-50 dark:bg-zinc-800 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold border border-teal-100 dark:border-zinc-700 shadow-sm">
-                    {{ substr(Auth::user()->name, 0, 1) }}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ Auth::user()->name }}</p>
-                    <p class="text-[10px] text-zinc-400 font-bold uppercase">View Profile</p>
-                </div>
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="w-10 h-10 rounded-full bg-teal-50 dark:bg-zinc-800 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold border border-teal-100 dark:border-zinc-700 shadow-sm">
+                        {{ substr(Auth::user()->name, 0, 1) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ Auth::user()->name }}</p>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase">View Profile</p>
+                    </div>
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button class="text-gray-400 hover:text-red-500 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
+                    <button class="text-gray-400 hover:text-red-500 transition px-2 py-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
                 </form>
             </div>
         </div>
