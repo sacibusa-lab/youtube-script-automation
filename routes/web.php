@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/titles/{title}/generate-image', [ProjectController::class, 'generateThumbnailImage'])->name('projects.titles.generate-image');
     Route::get('/projects/{project}/studio', [ProjectController::class, 'studio'])->name('projects.studio');
     Route::post('/projects/{project}/studio/save', [ProjectController::class, 'saveStudioState'])->name('projects.studio.save');
+    Route::post('/projects/{project}/assemble', [ProjectController::class, 'assembleVideo'])->name('projects.assemble');
 
     // Character Library
     Route::resource('characters', \App\Http\Controllers\CharacterController::class);

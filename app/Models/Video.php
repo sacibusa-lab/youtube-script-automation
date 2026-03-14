@@ -25,6 +25,7 @@ class Video extends Model
         'duration_minutes',
         'chapter_count',
         'status',
+        'video_url',
         'selected_title',
         'selected_title_index',
         'script',

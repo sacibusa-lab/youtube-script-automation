@@ -830,6 +830,13 @@
                     </div>
                     @endif
 
+                    @if($project->video_url)
+                    <a href="{{ $project->video_url }}" target="_blank" class="mt-4 flex items-center justify-center gap-2 w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-rose-500/20">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l-3 3m0 0l-3-3m3 3V3m0 13v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1m15-1v1a3 3 0 01-3 3h-1"></path></svg>
+                        Download Finished Video
+                    </a>
+                    @endif
+
                     <a href="{{ route('projects.export', $project) }}" class="mt-4 flex items-center justify-center gap-2 w-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Export Payload

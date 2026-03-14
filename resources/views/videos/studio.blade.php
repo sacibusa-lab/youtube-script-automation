@@ -104,7 +104,7 @@
             window.addEventListener('mouseup', onUp);
         },
 
-        project: {{ json_encode($project) }},
+        project: @js($project),
 
         get activeChapter() {
             return (this.project.chapters && this.project.chapters.length > 0)
@@ -258,6 +258,13 @@
                 <a href="{{ route('projects.export', $project) }}" class="bg-[#3e3e3e] hover:bg-[#4e4e4e] text-white px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition">
                     Export ZIP
                 </a>
+                <form action="{{ route('projects.assemble', $project) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                        Engage Production
+                    </button>
+                </form>
             </div>
         </div>
 

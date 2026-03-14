@@ -14,6 +14,8 @@ class Scene extends Model
         'visual_prompt',
         'visual_prompt_data',
         'character_references',
+        'locked_character_slug',
+        'locked_character_name',
         'image_url',
         'image_provider',
         'duration_seconds',

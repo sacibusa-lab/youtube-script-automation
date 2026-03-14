@@ -42,8 +42,8 @@ class ProjectController extends Controller
 
         return view('videos.index', [
             'videos' => $videos,
-            'totalTokens' => $usageStats->total_tokens ?? 0,
-            'totalCost' => $usageStats->total_cost ?? 0,
+            'totalTokens' => $usageStats?->total_tokens ?? 0,
+            'totalCost' => $usageStats?->total_cost ?? 0,
             'totalCompleted' => Video::where('user_id', $userId)->where('status', 'completed')->count(),
         ]);
     }
@@ -647,10 +647,10 @@ class ProjectController extends Controller
             abort(403);
         }
 
-        // Only allow production-ready projects in the studio
-        if (!in_array($project->status, ['approved', 'completed'])) {
+        // Only allow production-ready or currently-rendering projects in the studio
+        if (!in_array($project->status, ['approved', 'completed', 'assembling', 'assembly_failed'])) {
             return redirect()->route('projects.show', $project)
-                ->with('warning', 'The Studio is still generating your video architecture. Please wait for chapters to be finalized.');
+                ->with('warning', 'The Studio is not available for projects in this state.');
         }
 
         $project->load(['chapters.scenes', 'niche', 'channel']);
@@ -673,6 +673,8 @@ class ProjectController extends Controller
             'chapters.*.scenes.*.id' => 'required|exists:scenes,id',
             'chapters.*.scenes.*.narration_text' => 'nullable|string',
             'chapters.*.scenes.*.visual_prompt' => 'nullable|string',
+            'chapters.*.scenes.*.locked_character_slug' => 'nullable|string',
+            'chapters.*.scenes.*.locked_character_name' => 'nullable|string',
         ]);
 
         try {
@@ -685,6 +687,8 @@ class ProjectController extends Controller
                         ->update([
                             'narration_text' => $sceneData['narration_text'] ?? '',
                             'visual_prompt' => $sceneData['visual_prompt'] ?? '',
+                            'locked_character_slug' => $sceneData['locked_character_slug'] ?? null,
+                            'locked_character_name' => $sceneData['locked_character_name'] ?? null,
                         ]);
                 }
             }
@@ -706,7 +710,7 @@ class ProjectController extends Controller
         $userId = Auth::id();
         $videos = Video::with('chapters')
             ->where('user_id', $userId)
-            ->whereIn('status', ['approved', 'completed']) // Only show project in active production
+            ->whereIn('status', ['approved', 'completed', 'assembling', 'assembly_failed']) // Include active and failed production
             ->latest()
             ->paginate(12);
 
@@ -726,5 +730,28 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.index')
             ->with('success', 'Project deleted successfully.');
+    }
+
+    /**
+     * Terminate the workshop and trigger the full video assembly mission.
+     */
+    public function assembleVideo(Video $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Project must be approved, failed, or already completed (for re-assembly) to proceed
+        if (!in_array($project->status, ['approved', 'completed', 'assembly_failed'])) {
+            return back()->with('error', 'Project must be in an actionable state (approved/failed) before assembly.');
+        }
+
+        $project->update(['status' => 'assembling']);
+
+        // Dispatch Video Assembly Job
+        \App\Jobs\AssembleVideoJob::dispatch($project);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Video Assembly Engine Engaged! We are stitching your masterpiece together...');
     }
 }
