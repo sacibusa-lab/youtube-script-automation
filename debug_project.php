@@ -6,8 +6,10 @@ $kernel->bootstrap();
 
 use App\Models\Video;
 
-$projects = Video::where('user_id', \App\Models\User::first()->id)->get();
-echo "Total Projects: " . $projects->count() . "\n";
-foreach ($projects as $p) {
-    echo "ID: {$p->id} | Status: {$p->status} | Title: {$p->selected_title}\n";
+$p = Video::find(30);
+if ($p) {
+    $p->status = 'assembly_failed';
+    $p->save();
+    echo "Project 30 status reset to assembly_failed.\n";
 }
+

@@ -35,7 +35,7 @@ class AssembleVideoJob implements ShouldQueue
             ]);
             
             Log::info("Project #{$this->project->id} video successfully assembled.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("Video assembly failed for Project #{$this->project->id}: " . $e->getMessage());
             $this->project->update(['status' => 'assembly_failed']);
             throw $e;

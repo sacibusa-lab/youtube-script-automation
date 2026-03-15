@@ -31,20 +31,18 @@ class VideoAssemblyService
 
         Log::info("Starting video assembly for project: {$project->id}");
 
-        $videoPipe = FFMpeg::openAdvanced();
-
-        $inputCount = 0;
+        $relativePaths = [];
         $filterParts = [];
         $inputs = "";
+        $inputCount = 0;
 
         foreach ($scenes as $index => $scene) {
             if ($scene->image_url) {
                 $relativePath = str_replace('/storage/', '', parse_url($scene->image_url, PHP_URL_PATH));
-                // Normalizing path for Windows/FFmpeg compatibility
                 $fullPath = storage_path('app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $relativePath));
 
                 if (file_exists($fullPath)) {
-                    $videoPipe->addInputPath($fullPath);
+                    $relativePaths[] = $relativePath;
                     
                     $duration = $scene->duration_seconds ?: 5;
                     // Filter to set duration for each image: loop=1, framerate=25, trim/setpts
@@ -56,22 +54,23 @@ class VideoAssemblyService
             }
         }
 
-        if ($inputCount === 0) {
+        if (empty($relativePaths)) {
             throw new \Exception("No valid images found to assemble.");
         }
 
-        // Concatenate all loops
-        $complexFilter = implode('; ', $filterParts) . "; {$inputs}concat=n={$inputCount}:v=1:a=0[outv]";
+        // Concatenate all loops without any spaces to avoid Windows CMD argument splitting issues
+        $complexFilter = implode(';', $filterParts) . ";{$inputs}concat=n={$inputCount}:v=1:a=0[outv]";
 
         // Ensure directory exists
         if (!Storage::disk('public')->exists('exports')) {
             Storage::disk('public')->makeDirectory('exports');
         }
 
-        $videoPipe->complexFilter($complexFilter, 'outv')
+        FFMpeg::fromDisk('public')->open($relativePaths)
             ->export()
-            ->inFormat(new X264('libx264'))
-            ->save($exportPath);
+            ->addFormatOutputMapping(new X264('aac', 'libx264'), \ProtoneMedia\LaravelFFMpeg\Filesystem\Media::make('public', "exports/{$tempFileName}"), ['[outv]'], true)
+            ->addFilter('', '"' . $complexFilter . '"', '')
+            ->save();
 
         Log::info("Video assembly complete: {$exportPath}");
 

@@ -55,6 +55,10 @@ class ExportService
             mkdir(dirname($zipFilePath), 0755, true);
         }
 
+        if (!class_exists('ZipArchive')) {
+            throw new \RuntimeException("The PHP 'zip' extension is not enabled in your web server's PHP configuration. Please enable it in php.ini to use the export feature.");
+        }
+
         $zip = new ZipArchive;
         if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
             
