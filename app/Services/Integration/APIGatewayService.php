@@ -115,11 +115,6 @@ class APIGatewayService
                     ])->get('https://openrouter.ai/api/v1/auth/key');
                     return $response->successful();
 
-                case 'together':
-                    // Verify key via Together AI models endpoint
-                    $response = \Illuminate\Support\Facades\Http::timeout(10)->withToken($apiKey)->get('https://api.together.xyz/v1/models');
-                    return $response->successful();
-
                 default:
                     return false;
             }

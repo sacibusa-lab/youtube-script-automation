@@ -65,18 +65,26 @@ class ExportService
             // Add Full Script
             $zip->addFromString('full_script.txt', $this->exportFullScript($videoId));
 
-            // Add Images
+            // Add Images & Audio
             foreach ($video->chapters as $chapter) {
                 foreach ($chapter->scenes as $scene) {
+                    // Export Images
                     if ($scene->image_url) {
-                        // In production, you'd download the file from S3 or storage
-                        // For this local setup, we assume generated/ path in public disk
                         $relativePath = str_replace('/storage/', '', parse_url($scene->image_url, PHP_URL_PATH));
                         $fullPath = storage_path('app/public/' . $relativePath);
                         
                         if (file_exists($fullPath)) {
                             $fileName = "Chapter_{$chapter->chapter_number}_Scene_{$scene->scene_number}.png";
                             $zip->addFile($fullPath, "images/{$fileName}");
+                        }
+                    }
+
+                    // Export Audio
+                    if ($scene->audio_path) {
+                        $fullAudioPath = storage_path('app/public/' . $scene->audio_path);
+                        if (file_exists($fullAudioPath)) {
+                            $audioFileName = "Chapter_{$chapter->chapter_number}_Scene_{$scene->scene_number}.mp3";
+                            $zip->addFile($fullAudioPath, "audio/{$audioFileName}");
                         }
                     }
                 }

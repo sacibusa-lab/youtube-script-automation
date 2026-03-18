@@ -9,6 +9,20 @@
         lastSaved: null,
         voiceEnabled: true,
         isSpeaking: false,
+        isGeneratingVoice: false,
+        isBulkGenerating: false,
+        selectedVoice: 'af_heart',
+        availableVoices: [
+            { id: 'af_heart', name: 'Heart (Female)' },
+            { id: 'af_nicole', name: 'Nicole (Female)' },
+            { id: 'af_sky', name: 'Sky (Female)' },
+            { id: 'af_bella', name: 'Bella (Female)' },
+            { id: 'af_sarah', name: 'Sarah (Female)' },
+            { id: 'am_adam', name: 'Adam (Male)' },
+            { id: 'am_michael', name: 'Michael (Male)' },
+            { id: 'am_fenix', name: 'Fenix (Male)' },
+            { id: 'am_liam', name: 'Liam (Male)' }
+        ],
 
         // ── Character Library ─────────────────────────────────────────────
         characterLibrary: [],
@@ -163,6 +177,79 @@
             this.isPlaying = false;
             clearInterval(this.playInterval);
             this.stopSpeaking();
+            this.stopAudioPlayer();
+        },
+
+        async generateVoice(cIdx, sIdx) {
+            if (this.isGeneratingVoice) return;
+            this.isGeneratingVoice = true;
+            
+            const scene = this.project.chapters[cIdx].scenes[sIdx];
+            
+            try {
+                const res = await fetch(`/projects/${this.project.id}/scenes/${scene.id}/generate-voice`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ voice_id: this.selectedVoice })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    scene.audio_path = data.audio_path;
+                    scene.audio_url = data.audio_url;
+                    scene.voice_id = data.voice_id;
+                    window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'High-quality voice generated!', type: 'success' } }));
+                } else {
+                    throw new Error(data.message || 'Generation failed');
+                }
+            } catch(e) {
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: e.message, type: 'error' } }));
+            } finally {
+                this.isGeneratingVoice = false;
+            }
+        },
+
+        async bulkGenerateVoices() {
+            if (this.isBulkGenerating) return;
+            this.isBulkGenerating = true;
+            
+            try {
+                const res = await fetch(`/projects/${this.project.id}/bulk-generate-voice`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ voice_id: this.selectedVoice })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    // Update all scenes in the local project object
+                    data.results.forEach(result => {
+                        this.project.chapters.forEach(chapter => {
+                            const scene = chapter.scenes.find(s => s.id === result.scene_id);
+                            if (scene) {
+                                scene.audio_path = result.audio_path;
+                                scene.audio_url = result.audio_url;
+                                scene.voice_id = result.voice_id;
+                            }
+                        });
+                    });
+                    window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'All voices generated successfully!', type: 'success' } }));
+                } else {
+                    throw new Error(data.message || 'Bulk generation failed');
+                }
+            } catch(e) {
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: e.message, type: 'error' } }));
+            } finally {
+                this.isBulkGenerating = false;
+            }
         },
 
         syncIndexesToTime() {
@@ -185,6 +272,18 @@
         speak(text) {
             if (!this.voiceEnabled || !text) return;
             this.stopSpeaking();
+            this.stopAudioPlayer();
+
+            // Prioritize generated AI Voice
+            if (this.activeScene && this.activeScene.audio_path) {
+                const audio = this.$refs.voicePlayer;
+                audio.src = this.resolveUrl('storage/' + this.activeScene.audio_path);
+                audio.play().catch(e => console.warn('Audio playback failed', e));
+                this.isSpeaking = true;
+                return;
+            }
+
+            // Fallback to browser TTS for preview
             const u = new SpeechSynthesisUtterance(text);
             u.rate = 1.0; u.pitch = 1.0;
             u.onstart = () => this.isSpeaking = true;
@@ -194,6 +293,14 @@
         },
 
         stopSpeaking() { window.speechSynthesis.cancel(); this.isSpeaking = false; },
+        stopAudioPlayer() { 
+            const audio = this.$refs.voicePlayer;
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            this.isSpeaking = false; 
+        },
 
         testVoice() {
             if (!('speechSynthesis' in window)) { alert('Browser does not support Speech Synthesis. Try Chrome.'); return; }
@@ -379,9 +486,52 @@
                                         </div>
                                     </label>
                                 </div>
+                                <div class="relative group/voice">
+                                    <label class="block text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 px-1">Selected Voice Profile</label>
+                                    <select 
+                                        x-model="selectedVoice"
+                                        class="w-full bg-[#0f0f0f] border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-500 py-3 px-4 focus:ring-1 focus:ring-rose-600/50 appearance-none cursor-pointer"
+                                    >
+                                        <template x-for="voice in availableVoices" :key="voice.id">
+                                            <option :value="voice.id" x-text="voice.name"></option>
+                                        </template>
+                                    </select>
+                                    <div class="absolute right-4 top-[34px] pointer-events-none text-rose-800">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    @click="bulkGenerateVoices()" 
+                                    :disabled="isBulkGenerating"
+                                    class="w-full py-2.5 rounded-xl border border-rose-600/30 bg-rose-600/5 hover:bg-rose-600/10 text-rose-500 text-[8px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2"
+                                >
+                                    <template x-if="isBulkGenerating">
+                                        <svg class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    </template>
+                                    <span x-text="isBulkGenerating ? 'Calibrating All Channels...' : 'Bulk Generate All Voices'"></span>
+                                </button>
+
+                                <div class="h-[1px] bg-white/5 my-4"></div>
+
                                 <button @click="testVoice()" class="w-full mb-3 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-500 hover:text-white py-1.5 rounded-lg border border-white/5 text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-                                    Test Audio Output
+                                    Test Browser Audio 
+                                </button>
+                                
+                                <button 
+                                    @click="generateVoice(activeChapterIndex, activeSceneIndex)" 
+                                    :disabled="isGeneratingVoice"
+                                    class="w-full mb-3 py-2 rounded-lg border text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    :class="activeScene.audio_path ? 'bg-green-600/10 border-green-600/30 text-green-500 hover:bg-green-600/20' : 'bg-rose-600/10 border-rose-600/30 text-rose-500 hover:bg-rose-600/20'"
+                                >
+                                    <template x-if="isGeneratingVoice">
+                                        <svg class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    </template>
+                                    <template x-if="!isGeneratingVoice">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                    </template>
+                                    <span x-text="isGeneratingVoice ? 'Synthesizing...' : (activeScene.audio_path ? 'Regenerate Kokoro Voice' : 'Generate Kokoro Voice')"></span>
                                 </button>
                                 <div class="relative group/field">
                                     <textarea x-model="activeScene.narration_text" class="w-full bg-[#0f0f0f] border-none rounded-xl text-xs font-medium text-gray-300 leading-relaxed p-4 focus:ring-1 focus:ring-red-600/50 transition-all min-h-[120px]"></textarea>
@@ -632,10 +782,14 @@
                                         class="h-[70%] rounded border border-green-500/10 bg-green-900/10 flex-shrink-0 overflow-hidden"
                                         :style="'width: ' + Math.max(80, scene.duration_seconds * 15) + 'px'"
                                     >
-                                        {{-- Fake waveform bars --}}
-                                        <div class="flex items-end h-full gap-[1px] px-1 pb-0.5">
+                                        {{-- Waveform bars --}}
+                                        <div class="flex items-end h-full gap-[1px] px-1 pb-0.5" :class="scene.audio_path ? 'opacity-100' : 'opacity-30'">
                                             <template x-for="b in Math.max(4, Math.floor(scene.duration_seconds))">
-                                                <div class="flex-1 rounded-sm bg-green-500/30 hover:bg-green-400/50 transition-colors" :style="'height: ' + (30 + Math.random() * 50) + '%'"></div>
+                                                <div 
+                                                    class="flex-1 rounded-sm transition-all duration-500" 
+                                                    :class="scene.audio_path ? 'bg-rose-500' : 'bg-green-500/30'"
+                                                    :style="'height: ' + (scene.audio_path ? (40 + Math.random() * 50) : (20 + Math.random() * 40)) + '%'"
+                                                ></div>
                                             </template>
                                         </div>
                                     </div>
@@ -647,6 +801,9 @@
                 </div>
             </div>
         </div>
+        
+        {{-- Hidden Audio Player for AI Voices --}}
+        <audio x-ref="voicePlayer" class="hidden" @ended="isSpeaking = false"></audio>
     </div>
 
     @push('styles')

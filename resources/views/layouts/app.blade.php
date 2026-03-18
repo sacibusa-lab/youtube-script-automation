@@ -160,6 +160,11 @@
                 </div>
             </a>
 
+            <a href="{{ route('voice-generation.index') }}" class="sidebar-link {{ request()->routeIs('voice-generation.*') ? 'active' : '' }} gap-3.5">
+                <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                <span>Voice Generation</span>
+            </a>
+
             <a href="{{ route('projects.create') }}" class="sidebar-link {{ request()->routeIs('projects.create') ? 'active' : '' }} gap-3.5">
                 <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                 <span>New Story</span>
@@ -261,6 +266,7 @@
                     @if (request()->routeIs('dashboard')) Dashboard 
                     @elseif (request()->routeIs('projects.create')) New Story
                     @elseif (request()->routeIs('projects.show')) Story Details
+                    @elseif (request()->routeIs('voice-generation.*')) Voice Generation Studio
                     @elseif (request()->routeIs('analytics*')) Analytics
                     @else Overview @endif
                 </h2>

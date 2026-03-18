@@ -19,12 +19,21 @@ class Scene extends Model
         'image_url',
         'image_provider',
         'duration_seconds',
+        'audio_path',
+        'voice_id',
     ];
+
+    protected $appends = ['audio_url'];
 
     protected $casts = [
         'character_references' => 'array',
         'visual_prompt_data' => 'array',
     ];
+
+    public function getAudioUrlAttribute()
+    {
+        return $this->audio_path ? asset('storage/' . $this->audio_path) : null;
+    }
 
     public function video()
     {

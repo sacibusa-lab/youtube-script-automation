@@ -12,6 +12,7 @@ use App\Services\Export\ExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 use App\Jobs\GenerateConceptsJob;
 use App\Jobs\GenerateVideoStructureJob;
 use App\Traits\HandlesAIResponses;
@@ -22,14 +23,23 @@ class ProjectController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $userId = Auth::id();
+        $search = $request->input('search');
         
-        $videos = Video::with('chapters')
-            ->where('user_id', $userId)
-            ->latest()
-            ->paginate(12);
+        $query = Video::with('chapters')
+            ->where('user_id', $userId);
+
+        if ($search) {
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('selected_title', 'like', "%{$search}%")
+                  ->orWhere('topic', 'like', "%{$search}%")
+                  ->orWhere('niche', 'like', "%{$search}%");
+            });
+        }
+
+        $videos = $query->latest()->paginate(12);
 
         // AI Usage for this user
         $usageStats = DB::table('ai_usages')
@@ -753,5 +763,61 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Video Assembly Engine Engaged! We are stitching your masterpiece together...');
+    }
+
+    /**
+     * Generate high-quality AI voice-over for a scene using Kokoro TTS.
+     */
+    public function generateSceneVoice(Request $request, Video $project, \App\Models\Scene $scene, \App\Services\Media\VoiceOverService $voiceService)
+    {
+        if ($project->user_id !== Auth::id() || $scene->video_id !== $project->id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $audioPath = $voiceService->generate($scene, $request->voice_id);
+
+        if ($audioPath) {
+            return response()->json([
+                'success' => true,
+                'audio_url' => asset('storage/' . $audioPath),
+                'audio_path' => $audioPath,
+                'voice_id' => $scene->voice_id
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Voice generation failed'], 500);
+    }
+
+    /**
+     * Bulk generate AI voice-overs for all scenes in a video project.
+     */
+    public function bulkGenerateVoices(Request $request, Video $project, \App\Services\Media\VoiceOverService $voiceService)
+    {
+        if ($project->user_id !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $project->load('chapters.scenes');
+        $voiceId = $request->voice_id;
+        $results = [];
+
+        foreach ($project->chapters as $chapter) {
+            foreach ($chapter->scenes as $scene) {
+                $audioPath = $voiceService->generate($scene, $voiceId);
+                if ($audioPath) {
+                    $results[] = [
+                        'scene_id' => $scene->id,
+                        'audio_url' => asset('storage/' . $audioPath),
+                        'voice_id' => $scene->voice_id
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bulk voice generation completed',
+            'results' => $results
+        ]);
     }
 }

@@ -639,12 +639,70 @@
                             <div class="space-y-12">
                                 @foreach($chapter->scenes as $scene)
                                 <div class="flex flex-col lg:flex-row gap-8 group">
-                                    <div class="flex-1 space-y-3">
+                                    <div class="flex-1 space-y-4">
                                         <div class="flex items-center gap-3">
                                             <span class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">Node {{ str_pad($scene->scene_number, 2, '0', STR_PAD_LEFT) }}</span>
                                             <div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
                                         </div>
-                                        <p class="text-base font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed">{{ $scene->narration_text }}</p>
+                                        
+                                        <div class="bg-zinc-50 dark:bg-zinc-900/30 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800/50">
+                                            <p class="text-base font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed mb-4">{{ $scene->narration_text }}</p>
+                                            
+                                            {{-- VOICE CONTROLS --}}
+                                            <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800/50" x-data="{
+                                                isGenerating: false,
+                                                audioUrl: '{{ $scene->audio_url }}' || null,
+                                                selectedVoice: '{{ $scene->voice_id ?? 'af_heart' }}',
+                                                async generateVoice() {
+                                                    this.isGenerating = true;
+                                                    try {
+                                                        const res = await fetch('{{ route('projects.scenes.generate-voice', [$project, $scene]) }}', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                'Content-Type': 'application/json',
+                                                                'Accept': 'application/json'
+                                                            },
+                                                            body: JSON.stringify({ voice_id: this.selectedVoice })
+                                                        });
+                                                        const data = await res.json();
+                                                        if (data.success) {
+                                                            this.audioUrl = data.audio_url;
+                                                            this.$dispatch('notify', { detail: { message: 'AI Narration Synthesized', type: 'success' } });
+                                                        } else {
+                                                            throw new Error(data.message || 'Generation failed');
+                                                        }
+                                                    } catch (e) {
+                                                        this.$dispatch('notify', { detail: { message: e.message, type: 'error' } });
+                                                    } finally {
+                                                        this.isGenerating = false;
+                                                    }
+                                                }
+                                            }">
+                                                <div class="flex flex-wrap items-center gap-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Voice</span>
+                                                        <select x-model="selectedVoice" class="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-[10px] font-bold rounded-lg py-1 px-2 focus:ring-rose-500 border min-w-[120px]">
+                                                            <option value="af_heart">Heart (F)</option>
+                                                            <option value="af_nicole">Nicole (F)</option>
+                                                            <option value="af_sky">Sky (F)</option>
+                                                            <option value="am_adam">Adam (M)</option>
+                                                            <option value="am_michael">Michael (M)</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <button @click="generateVoice" :disabled="isGenerating" class="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 dark:hover:bg-rose-500 transition disabled:opacity-50">
+                                                        <svg x-show="!isGenerating" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>
+                                                        <svg x-show="isGenerating" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                        <span x-text="isGenerating ? 'Synthesizing...' : (audioUrl ? 'Regenerate Narration' : 'Generate Narration')"></span>
+                                                    </button>
+
+                                                    <template x-if="audioUrl">
+                                                        <audio :src="audioUrl" controls class="h-8 max-w-[200px]"></audio>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="w-full lg:w-64 xl:w-72 flex-shrink-0">
                                             <div class="aspect-video bg-zinc-100 dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative group/img">

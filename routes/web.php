@@ -61,6 +61,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/studio', [ProjectController::class, 'studio'])->name('projects.studio');
     Route::post('/projects/{project}/studio/save', [ProjectController::class, 'saveStudioState'])->name('projects.studio.save');
     Route::post('/projects/{project}/assemble', [ProjectController::class, 'assembleVideo'])->name('projects.assemble');
+    Route::post('/projects/{project}/scenes/{scene}/generate-voice', [ProjectController::class, 'generateSceneVoice'])->name('projects.scenes.generate-voice');
+    Route::post('/projects/{project}/bulk-generate-voice', [ProjectController::class, 'bulkGenerateVoices'])->name('projects.bulk-generate-voice');
+
+    // Dedicated Voice Generation Studio
+    Route::get('/voice-generation', [\App\Http\Controllers\VoiceGenerationController::class, 'index'])->name('voice-generation.index');
+    Route::post('/voice-generation/generate', [\App\Http\Controllers\VoiceGenerationController::class, 'generate'])->name('voice-generation.generate');
+    Route::post('/voice-generation/bulk-generate', [\App\Http\Controllers\VoiceGenerationController::class, 'bulkGenerate'])->name('voice-generation.bulk-generate');
 
     // Character Library
     Route::resource('characters', \App\Http\Controllers\CharacterController::class);

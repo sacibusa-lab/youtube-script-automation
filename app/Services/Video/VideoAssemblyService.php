@@ -66,11 +66,18 @@ class VideoAssemblyService
             Storage::disk('public')->makeDirectory('exports');
         }
 
-        FFMpeg::fromDisk('public')->open($relativePaths)
-            ->export()
-            ->addFormatOutputMapping(new X264('aac', 'libx264'), \ProtoneMedia\LaravelFFMpeg\Filesystem\Media::make('public', "exports/{$tempFileName}"), ['[outv]'], true)
-            ->addFilter('', '"' . $complexFilter . '"', '')
-            ->save();
+        try {
+            FFMpeg::fromDisk('public')->open($relativePaths)
+                ->export()
+                ->addFormatOutputMapping(new X264('aac', 'libx264'), \ProtoneMedia\LaravelFFMpeg\Filesystem\Media::make('public', "exports/{$tempFileName}"), ['[outv]'], true)
+                ->addFilter('', '"' . $complexFilter . '"', '')
+                ->save();
+        } catch (\ProtoneMedia\LaravelFFMpeg\Exporters\EncodingException $e) {
+            Log::error("Video assembly failed for Project #{$project->id}: " . $e->getMessage());
+            Log::error("FFmpeg Command: " . $e->getCommand());
+            Log::error("FFmpeg Error Output: " . $e->getErrorOutput());
+            throw $e;
+        }
 
         Log::info("Video assembly complete: {$exportPath}");
 

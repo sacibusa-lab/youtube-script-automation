@@ -28,7 +28,6 @@ class AIManager
         
         $this->providers = [
             'openrouter' => new OpenRouterProvider(),
-            'together' => new TogetherAIProvider(),
         ];
     }
 
@@ -73,7 +72,7 @@ class AIManager
         $prioritizedModels = !empty($explicitModels) ? $explicitModels : $this->getModelPriority($providerName, $jobType);
 
         // 3. SMARTS: Force OpenRouter if model looks like a slash-based ID and we aren't already on a slash-compatible provider
-        if (!empty($prioritizedModels) && str_contains($prioritizedModels[0], '/') && !in_array($providerName, ['openrouter', 'together'])) {
+        if (!empty($prioritizedModels) && str_contains($prioritizedModels[0], '/') && !in_array($providerName, ['openrouter'])) {
              $providerName = 'openrouter';
         }
 
@@ -237,13 +236,6 @@ class AIManager
             if ($role && !empty($role->selected_model)) {
                 return [$role->selected_model];
             }
-        }
-
-        if ($provider === 'together') {
-            return match ($jobType) {
-                'script', 'narration' => ['mistralai/Mixtral-8x7B-Instruct-v0.1', 'togethercomputer/llama-2-70b-chat'],
-                default => ['togethercomputer/llama-2-7b-chat', 'mistralai/Mistral-7B-Instruct-v0.2'],
-            };
         }
 
         return match ($jobType) {
