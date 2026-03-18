@@ -66,10 +66,10 @@
                 return this.strategies[this.selectedStrategyIndex] || {};
             },
             get currentMegaHook() {
-                return this.currentStrategy.mega_hook || 'Architecting retention hook...';
+                return this.currentStrategy.mega_hook || 'Awaiting Hook Synthesis...';
             },
             get currentThumbnail() {
-                return this.currentStrategy.thumbnail_concept || 'Synthesizing visual core...';
+                return this.currentStrategy.thumbnail_concept || 'Awaiting Visual Core Synthesis...';
             },
             get currentThumbnailUrl() {
                 return this.currentStrategy.thumbnail_url || null;
@@ -282,28 +282,38 @@
                                 class="group relative w-full p-8 rounded-[32px] border transition-all duration-500 overflow-hidden bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-500 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                             >
                                 <div class="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/5 to-red-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div class="relative flex items-center justify-between">
-                                    <div class="flex items-center gap-6">
-                                        <div class="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center text-white dark:text-zinc-900 font-black text-xs">
-                                            0<span x-text="index + 1"></span>
+                                <div class="relative">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center gap-6">
+                                            <div class="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center text-white dark:text-zinc-900 font-black text-[10px]">
+                                                0<span x-text="index + 1"></span>
+                                            </div>
+                                            <h3 class="text-xl font-black text-zinc-900 dark:text-white group-hover:text-red-500 transition-colors" x-text="strategy.title"></h3>
                                         </div>
-                                        <h3 class="text-xl font-black text-zinc-900 dark:text-white group-hover:text-red-500 transition-colors" x-text="strategy.title"></h3>
+                                        <div class="flex items-center gap-4">
+                                            <button 
+                                                @click.stop="toggleBookmark(index, $event)"
+                                                class="w-10 h-10 rounded-full flex items-center justify-center transition-colors relative z-20 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                                                :class="bookmarks[strategy.title] ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-zinc-300 dark:text-zinc-600 hover:text-red-500'"
+                                                title="Save to Data Vault"
+                                            >
+                                                <svg class="w-5 h-5 transition-transform group-hover:scale-110" :fill="bookmarks[strategy.title] ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-4">
-                                        <!-- Bookmark Button (Heart icon) -->
-                                        <button 
-                                            @click.stop="toggleBookmark(index, $event)"
-                                            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors relative z-20 hover:bg-zinc-200 dark:hover:bg-zinc-800"
-                                            :class="bookmarks[strategy.title] ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-zinc-300 dark:text-zinc-600 hover:text-red-500'"
-                                            title="Save to Data Vault"
-                                        >
-                                            <svg class="w-5 h-5 transition-transform group-hover:scale-110" :fill="bookmarks[strategy.title] ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                                            </svg>
-                                        </button>
-                                        <svg class="w-6 h-6 text-zinc-300 dark:text-zinc-700 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path>
-                                        </svg>
+
+                                    {{-- NEW: Immediate Narrative Preview --}}
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pl-16">
+                                        <div class="space-y-2">
+                                            <span class="text-[9px] font-black uppercase text-red-500 tracking-widest">Mega Hook</span>
+                                            <p class="text-xs text-zinc-500 dark:text-zinc-400 italic line-clamp-3 leading-relaxed" x-text="strategy.mega_hook || 'Awaiting Hook Synthesis...'"></p>
+                                        </div>
+                                        <div class="space-y-2">
+                                            <span class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Visual Core</span>
+                                            <p class="text-[10px] text-zinc-500 line-clamp-3 leading-snug" x-text="strategy.thumbnail_concept || 'Awaiting Visual Core Synthesis...'"></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -415,9 +425,9 @@
                         <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(220,38,38,0.1),transparent)] flex items-center justify-center">
                             <div class="animate-pulse flex flex-col items-center">
                                 <div class="w-20 h-20 rounded-full border-4 border-red-600/20 border-t-red-600 animate-spin mb-8"></div>
-                                <h2 class="text-3xl font-black text-white mb-4 italic tracking-tight">Architecting Narrative Details...</h2>
-                                <p class="text-zinc-400 font-medium max-w-md mx-auto leading-relaxed">
-                                    Our AI is currently synthesizing the mega-hook, thumbnail concept, and script preview for your selected title.
+                                <h2 class="text-3xl font-black text-white mb-4 italic tracking-tight">Architecting Story Bible...</h2>
+                                <p class="text-zinc-400 font-medium max-w-md mx-auto leading-relaxed uppercase text-[10px] tracking-widest">
+                                    AI is synthesizing the cinematic hook, visual core, and scene schematics for your selected mission.
                                 </p>
                             </div>
                         </div>
@@ -428,7 +438,7 @@
         @endif
 
         @php
-            $statusesToHideChapters = ['waiting_for_concept_selection', 'waiting_for_strategy_selection', 'waiting_for_title_selection', 'generating_concept_details', 'waiting_for_launch', 'failed_stage_2'];
+            $statusesToHideChapters = ['waiting_for_concept_selection', 'waiting_for_strategy_selection', 'waiting_for_title_selection', 'waiting_for_launch', 'failed_stage_2'];
         @endphp
         <div class="" 
              x-data="{ 
@@ -458,7 +468,7 @@
                     }
                 }
              }"
-             x-show="!statusesToHide.includes('{{ $project->status }}') && '{{ $project->status }}' !== 'generating_concept_details'"
+             x-show="!statusesToHide.includes('{{ $project->status }}')"
              x-init="$watch('activeTab', val => localStorage.setItem('project_{{ $project->id }}_activeTab', val))">
             
             @if($project->chapters->where('status', 'generating')->isNotEmpty())
@@ -488,9 +498,9 @@
 
                         <h2 class="text-2xl font-black mb-2 uppercase tracking-tight">
                             @if($project->status === 'failed' || $project->status === 'failed_stage_2') <span class="text-red-600">MISSION TERMINATED</span>
-                            @elseif($project->status === 'generating_concepts') ARCHITECTING VECTORS
-                            @elseif($project->status === 'generating_concept_details') ARCHITECTING CONCEPT
-                            @elseif($project->status === 'generating_monthly_plan' || $project->status === 'generating_structure' || $project->status === 'architecting_chapters') ENGINEERING CORE
+                            @elseif($project->status === 'generating_concepts') SCANNING VIRAL HORIZONS
+                            @elseif($project->status === 'generating_concept_details') ARCHITECTING STORY BIBLE
+                            @elseif($project->status === 'generating_monthly_plan' || $project->status === 'generating_structure' || $project->status === 'architecting_chapters') ENGINEERING CINEMATIC BLUEPRINT
                             @elseif($project->status === 'generating_thumbnail_concept') FINALIZING VISUALS
                             @elseif($project->status === 'generating_chapters') CRAFTING NARRATIVE
                             @elseif($project->status === 'pending') QUEUEING MISSION
@@ -499,9 +509,9 @@
 
                         <p class="text-zinc-500 dark:text-zinc-400 font-medium max-w-md mx-auto mb-10 uppercase text-[10px] tracking-widest">
                             @if($project->status === 'failed' || $project->status === 'failed_stage_2') Critical Engine Failure. Deployment aborted.
-                            @elseif($project->status === 'generating_concepts') Calculating viral trajectories for your niche<span x-text="dots"></span>
-                            @elseif($project->status === 'generating_concept_details') Synthesizing narrative hook and visual core<span x-text="dots"></span>
-                            @elseif($project->status === 'generating_monthly_plan' || $project->status === 'generating_structure' || $project->status === 'architecting_chapters') Mapping cinematic arcs and narrative beats<span x-text="dots"></span>
+                            @elseif($project->status === 'generating_concepts') Analyzing niche patterns and identifying 5 high-velocity trajectories<span x-text="dots"></span>
+                            @elseif($project->status === 'generating_concept_details') Synthesizing cinematic hook and visual core schematics<span x-text="dots"></span>
+                            @elseif($project->status === 'generating_monthly_plan' || $project->status === 'generating_structure' || $project->status === 'architecting_chapters') Mapping 10-chapter cinematic arcs and narrative beats into a production-ready bible<span x-text="dots"></span>
                             @elseif($project->status === 'pending') Positioning in deployment queue<span x-text="dots"></span>
                             @else AI is synthesizing high-retention concepts<span x-text="dots"></span> @endif
                         </p>

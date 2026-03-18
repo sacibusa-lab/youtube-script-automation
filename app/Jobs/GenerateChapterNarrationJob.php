@@ -56,7 +56,9 @@ class GenerateChapterNarrationJob implements ShouldQueue
                 $this->chapter,
                 $this->allChapters,
                 $characters,
-                'PRO'
+                'PRO',
+                $this->chapter->duration_seconds ?? 60,
+                $this->video->mega_hook
             );
 
             $response = $aiManager->generate($prompt, [], $this->video->user_id, 'narration', $this->video->id);

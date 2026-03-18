@@ -65,6 +65,18 @@ class ExportService
             // Add Full Script
             $zip->addFromString('full_script.txt', $this->exportFullScript($videoId));
 
+            // Add Thumbnail if exists
+            $generatedTitle = $video->generatedTitles()->where('title', $video->selected_title)->first();
+            $thumbnailUrl = $generatedTitle->thumbnail_url ?? $video->thumbnail_json['url'] ?? null;
+            
+            if ($thumbnailUrl) {
+                $relativePath = str_replace('/storage/', '', parse_url($thumbnailUrl, PHP_URL_PATH));
+                $fullPath = storage_path('app/public/' . $relativePath);
+                if (file_exists($fullPath)) {
+                    $zip->addFile($fullPath, "thumbnail.png");
+                }
+            }
+
             // Add Images & Audio
             foreach ($video->chapters as $chapter) {
                 foreach ($chapter->scenes as $scene) {

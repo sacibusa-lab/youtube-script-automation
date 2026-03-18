@@ -13,7 +13,8 @@ trait HandlesAIResponses
         $data = json_decode($content, true);
         
         if (json_last_error() === JSON_ERROR_NONE) {
-            return is_array($data) ? ($data['content'] ?? $data) : [];
+            $result = is_array($data) ? ($data['content'] ?? $data) : [];
+            return is_array($result) ? $result : [];
         }
 
         // 2. Clean markdown backticks
@@ -21,7 +22,8 @@ trait HandlesAIResponses
         $data = json_decode($cleanContent, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
-            return is_array($data) ? ($data['content'] ?? $data) : [];
+            $result = is_array($data) ? ($data['content'] ?? $data) : [];
+            return is_array($result) ? $result : [];
         }
 
         if (preg_match('/\{.*\}/s', $content, $matches)) {
@@ -29,10 +31,8 @@ trait HandlesAIResponses
         }
 
         if (is_array($data)) {
-            if (isset($data['content']) && is_array($data['content'])) {
-                return $data['content'];
-            }
-            return $data;
+            $result = $data['content'] ?? $data;
+            return is_array($result) ? $result : $data;
         }
 
         return [];

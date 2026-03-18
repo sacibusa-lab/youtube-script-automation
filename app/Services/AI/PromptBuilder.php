@@ -280,7 +280,7 @@ PROMPT;
     }
 
     /**
-     * Build multi-strategy prompt for 5 distinct concepts (Stage 1 - Titles Only)
+     * Build multi-strategy prompt for 5 distinct concepts (Full Architectural Vectors)
      */
     public function buildMultiStrategyPrompt(
         string $topic,
@@ -293,21 +293,33 @@ PROMPT;
         return <<<PROMPT
 {$directive}
 
-**TASK: ARCHITECT 5 VIRAL VIDEO TITLES**
+**TASK: ARCHITECT 5 VIRAL VIDEO VECTORS**
 Niche: {$niche}
-Target Audience: {$tier1Country}
+Target Market: {$tier1Country}
 Topic: {$topic}
 
-Generate 5 completely distinct and viral titles. Focus on extreme curiosity gaps and high-stakes emotional hooks.
+Generate 5 completely distinct viral trajectories. For each trajectory, you MUST provide a high-CTR title, a high-stakes mega-hook, a cinematic thumbnail concept, and a short script preview.
 
 **OUTPUT SCHEMA (MANDATORY JSON):**
 {
   "strategies": [
     {
-      "title": "Concept Title"
+      "title": "Extreme Viral Title",
+      "mega_hook": "The first 30 seconds of narration that forces a 'Stop the Scroll' reaction.",
+      "thumbnail_concept": "A detailed cinematic visual description for the thumbnail (technical specs: 8k, cinematic lighting, photoreal).",
+      "short_script": {
+        "scene": "Visual description of the opening second.",
+        "narration": "The opening punchline or statement."
+      }
     }
   ]
 }
+
+**CONSTRAINTS:**
+1. **DIVERSITY**: Each of the 5 concepts must take a radically different angle (e.g., Fear, Curiosity, Justice, Profit, Discovery).
+2. **HOOK DENSITY**: The mega_hook must be punchy and professional.
+3. **VISUAL PRECISION**: Thumbnail concepts should be descriptive enough for an AI image generator.
+4. **IMMEDIACY**: Every field must be populated to allow for instant production launch.
 PROMPT;
     }
 
@@ -665,28 +677,47 @@ PROMPT;
         $chapter,
         array $allChapters,
         array $characters,
-        string $tier = 'PRO'
+        string $tier = 'PRO',
+        int $targetDurationSeconds = 60,
+        ?string $megaHook = null
     ): string {
         $directive = $this->getSystemDirective(['niche' => $video->niche, 'tier' => $tier]);
         $localization = $this->getTier1LocalizationGuidelines($video->tier1_country);
         $charJson = json_encode($characters, JSON_PRETTY_PRINT);
+
+        // Calculate budgets based on ~140 words per minute (2.33 words/sec)
+        // Average scene length target is 7 seconds.
+        $targetWordCount = (int) ($targetDurationSeconds * 2.33);
+        $targetSceneCount = (int) max(1, round($targetDurationSeconds / 7));
+
+        $hookInstruction = "";
+        if ($chapter->chapter_number === 1 && $megaHook) {
+            $hookInstruction = "\n---\n**MANDATORY START**: You MUST start Scene 1 with this exact text for the narration: \"{$megaHook}\". This is your core retention hook.\n---\n";
+        }
         
         return <<<PROMPT
 {$directive}
 
-**TASK: GENERATING GRANULAR CHAPTER NARRATION (6/7 SECOND RULE)**
+**TASK: GENERATING GRANULAR CHAPTER NARRATION (STRICT DURATION MODE)**
 Project: {$video->selected_title}
 Chapter: #{$chapter->chapter_number} - "{$chapter->title}"
+{$hookInstruction}
+
+**TARGET METRICS (MANDATORY):**
+- **Target Duration**: {$targetDurationSeconds} seconds.
+- **Target Word Count**: Approximately {$targetWordCount} words.
+- **Target Scene Count**: Exactly {$targetSceneCount} scene fragments.
 
 **INPUTS:**
 - Market: {$video->tier1_country}
 - Characters: {$charJson}
 
-**CRITICAL CONSTRAINTS (HIGH RETENTION MODE):**
-1. **ONE SENTENCE PER SCENE**: You MUST break the narration into granular fragments. Every single sentence MUST be its own unique scene object.
-2. **THE 6/7 SECOND RULE**: Each scene's `duration_seconds` MUST be between 6 and 10 seconds.
-3. **VISUAL ENGAGEMENT**: Every scene fragment must be strong enough to warrant a unique visual image.
-4. **CONTINUITY**: Ensure the narration flows perfectly across these fragments.
+**CRITICAL CONSTRAINTS:**
+1. **WORD COUNT ADHERENCE**: The narration must be within +/- 10% of the {$targetWordCount} word target. This is vital for voiceover timing.
+2. **ONE SENTENCE PER SCENE**: Every single sentence MUST be its own unique scene object in the array.
+3. **SCENE VOLUME**: You MUST generate around {$targetSceneCount} scenes to fill the duration correctly.
+4. **THE 6/7 SECOND RULE**: Each scene's `duration_seconds` MUST be calculated to sum up to exactly {$targetDurationSeconds} seconds for the entire chapter.
+5. **VISUAL ENGAGEMENT**: Every scene fragment must be strong enough to warrant a unique visual image.
 {$localization}
 
 **OUTPUT SCHEMA (MANDATORY):**

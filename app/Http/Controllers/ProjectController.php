@@ -226,6 +226,20 @@ class ProjectController extends Controller
 
         $generatedTitle = GeneratedTitle::findOrFail($validated['title_id']);
 
+        // Check if we already have the narrative details (Instant Flow)
+        if (!empty($generatedTitle->mega_hook) && !empty($generatedTitle->thumbnail_concept)) {
+            $project->update([
+                'selected_title' => $generatedTitle->title,
+                'mega_hook' => $generatedTitle->mega_hook,
+                'thumbnail_concept' => $generatedTitle->thumbnail_concept,
+                'status' => 'waiting_for_launch',
+            ]);
+
+            return redirect()->route('projects.show', $project)
+                ->with('success', 'Concept selected! Launch whenever you are ready.');
+        }
+
+        // Fallback for older projects without initial details
         $project->update([
             'selected_title' => $generatedTitle->title,
             'status' => 'generating_concept_details',
