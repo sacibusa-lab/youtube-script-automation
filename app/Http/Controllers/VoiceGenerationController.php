@@ -44,6 +44,16 @@ class VoiceGenerationController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        $user = Auth::user();
+        $cost = $user->plan->voice_token_cost ?? 50;
+
+        if (!$user->isAdmin() && !$user->hasCredits($cost, 'voice')) {
+            return response()->json([
+                'success' => false, 
+                'message' => "Insufficient voice tokens. Required: {$cost}, Balance: " . $user->voiceTokensBalance()
+            ], 402);
+        }
+
         $options = [
             'speed' => (float) $request->input('speed', 1.0),
             'volume' => (float) $request->input('volume', 1.0),
@@ -52,12 +62,18 @@ class VoiceGenerationController extends Controller
         $audioPath = $voiceService->generate($scene, $request->voice_id, $options);
 
         if ($audioPath) {
+            // Deduct Tokens
+            if (!$user->isAdmin()) {
+                $user->deductCredits($cost, 'voice');
+            }
+
             return response()->json([
                 'success' => true,
                 'audio_url' => asset('storage/' . $audioPath),
                 'audio_path' => $audioPath,
                 'scene_id' => $scene->id,
-                'voice_id' => $request->voice_id
+                'voice_id' => $request->voice_id,
+                'tokens_remaining' => $user->fresh()->voiceTokensBalance()
             ]);
         }
 
@@ -82,6 +98,18 @@ class VoiceGenerationController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        $user = Auth::user();
+        $costPerScene = $user->plan->voice_token_cost ?? 50;
+        $totalScenes = count($chapter->scenes);
+        $totalCost = $totalScenes * $costPerScene;
+
+        if (!$user->isAdmin() && !$user->hasCredits($totalCost, 'voice')) {
+            return response()->json([
+                'success' => false, 
+                'message' => "Insufficient voice tokens for bulk generation. Required: {$totalCost}, Balance: " . $user->voiceTokensBalance()
+            ], 402);
+        }
+
         $options = [
             'speed' => (float) $request->input('speed', 1.0),
             'volume' => (float) $request->input('volume', 1.0),
@@ -103,11 +131,16 @@ class VoiceGenerationController extends Controller
             }
         }
 
+        if ($successCount > 0 && !$user->isAdmin()) {
+            $user->deductCredits($successCount * $costPerScene, 'voice');
+        }
+
         return response()->json([
             'success' => $successCount > 0,
             'processed' => $total,
             'succeeded' => $successCount,
-            'results' => $results
+            'results' => $results,
+            'tokens_remaining' => $user->fresh()->voiceTokensBalance()
         ]);
     }
 }

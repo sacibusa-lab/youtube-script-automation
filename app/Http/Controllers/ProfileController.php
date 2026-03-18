@@ -41,6 +41,8 @@ class ProfileController extends Controller
         $imageUsedPct    = $user->total_image_tokens > 0
             ? round(($user->used_image_tokens / $user->total_image_tokens) * 100)
             : 0;
+        $voiceBalance     = $user->voiceTokensBalance();
+        $voiceUsedPct     = $user->voiceTokensFuelPercentage();
 
         return view('profile.edit', compact(
             'user',
@@ -50,6 +52,8 @@ class ProfileController extends Controller
             'imageBalance',
             'scriptUsedPct',
             'imageUsedPct',
+            'voiceBalance',
+            'voiceUsedPct',
         ));
     }
 

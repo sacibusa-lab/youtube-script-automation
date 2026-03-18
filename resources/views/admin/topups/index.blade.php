@@ -26,6 +26,12 @@
                                 <span class="text-3xl font-black text-gray-950 dark:text-white italic">{{ number_format($package->credits / 1000) }}k</span>
                                 <span class="text-sm font-bold text-gray-400 uppercase tracking-widest">Credits</span>
                             </div>
+                            @if($package->voice_tokens > 0)
+                                <div class="flex items-baseline gap-2 mb-1">
+                                    <span class="text-xl font-black text-purple-600 dark:text-purple-400 italic">+{{ number_format($package->voice_tokens) }}</span>
+                                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Voice Tokens</span>
+                                </div>
+                            @endif
                             <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300">{{ $package->name }}</h3>
                         </div>
 

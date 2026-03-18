@@ -33,6 +33,7 @@ class TopupPackageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'credits' => 'required|integer|min:0',
+            'voice_tokens' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
             'is_active' => 'boolean',
         ]);
@@ -60,6 +61,7 @@ class TopupPackageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'credits' => 'required|integer|min:0',
+            'voice_tokens' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
             'is_active' => 'boolean',
         ]);

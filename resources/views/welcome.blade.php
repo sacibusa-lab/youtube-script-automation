@@ -178,7 +178,7 @@
     <section class="pt-48 pb-32 px-6">
         <div class="max-w-7xl mx-auto text-center">
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 mb-10 animate-reveal">
-                <span class="text-[10px] font-black text-white bg-white/10 px-4 py-2 rounded-full border border-white/20 uppercase tracking-[0.3em] backdrop-blur-md">StoryBee: v2.5 Next-Gen Engine Active</span>
+                <span class="text-[10px] font-black text-white bg-white/10 px-4 py-2 rounded-full border border-white/20 uppercase tracking-[0.3em] backdrop-blur-md">StoryBee: Next-Gen Script & Voice Ecosystem Active</span>
             </div>
             
             <h1 class="text-6xl md:text-8xl font-black font-outfit uppercase tracking-tighter leading-[0.85] mt-8 mb-6 relative z-10">
@@ -248,8 +248,8 @@
                     <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500/20 to-transparent border border-teal-500/30 flex items-center justify-center mb-8">
                         <svg class="w-8 h-8 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2 font-outfit">Story Architect</h3>
-                    <p class="text-zinc-500 text-sm leading-relaxed">Seamless 10-chapter structural blueprints with 'Mega-Hook' technology for the first 30 seconds.</p>
+                    <h3 class="text-xl font-bold text-white mb-2 font-outfit">Cinematic Story Bible</h3>
+                    <p class="text-zinc-500 text-sm leading-relaxed">Structural 10-chapter blueprints with deep context retention and 'Mega-Hook' technology.</p>
                 </div>
 
                 <!-- Step 2 -->
@@ -268,8 +268,8 @@
                     <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-transparent border border-amber-500/30 flex items-center justify-center mb-8">
                         <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2 font-outfit">Expressive Narration</h3>
-                    <p class="text-zinc-500 text-sm leading-relaxed">Convert your story scripts into expressive AI voice narration. Tuned for documentary and cinematic tones.</p>
+                    <h3 class="text-xl font-bold text-white mb-2 font-outfit">Voice Gen Studio</h3>
+                    <p class="text-zinc-500 text-sm leading-relaxed">Fine-tuned speech engines for Tier-1 markets. Expressive narration tuned for cinematic documentary tones.</p>
                 </div>
 
                 <!-- Step 4 -->
@@ -300,13 +300,13 @@
                             <div class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 shadow-inner">
                                 <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                            <span class="font-bold text-zinc-300">Permanent Visual IDs</span>
+                            <span class="font-bold text-zinc-300">Story Bible Structural Sync</span>
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 shadow-inner">
                                 <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                            <span class="font-bold text-zinc-300">Style Consistency Matrix</span>
+                            <span class="font-bold text-zinc-300">Style Consistency Matrix 2.0</span>
                         </div>
                     </div>
                 </div>
@@ -483,13 +483,11 @@
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <span class="text-xs font-bold text-zinc-400 font-outfit uppercase tracking-tighter">
-                                    @if($plan->monthly_image_tokens > 0)
-                                        {{ number_format($plan->monthly_image_tokens) }} Scene Assets
-                                    @else
-                                        Pay-per-scene billing
-                                    @endif
-                                </span>
+                                <span class="text-xs font-bold text-zinc-400 font-outfit uppercase tracking-tighter">{{ number_format($plan->monthly_image_tokens) }} Image Tokens</span>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <span class="text-xs font-bold text-zinc-400 font-outfit uppercase tracking-tighter">{{ number_format($plan->monthly_voice_tokens) }} Voice Tokens</span>
                             </div>
 
                             <div class="flex items-center gap-4">

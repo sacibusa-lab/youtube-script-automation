@@ -59,6 +59,8 @@ class UserController extends Controller
             'used_credits' => 'required|numeric|min:0',
             'total_image_tokens' => 'required|numeric|min:0',
             'used_image_tokens' => 'required|numeric|min:0',
+            'total_voice_tokens' => 'required|numeric|min:0',
+            'used_voice_tokens' => 'required|numeric|min:0',
         ]);
 
         $oldTiers = $user->only(['plan_id', 'total_credits']);
@@ -68,6 +70,8 @@ class UserController extends Controller
         $user->used_credits = $validated['used_credits'];
         $user->total_image_tokens = $validated['total_image_tokens'];
         $user->used_image_tokens = $validated['used_image_tokens'];
+        $user->total_voice_tokens = $validated['total_voice_tokens'];
+        $user->used_voice_tokens = $validated['used_voice_tokens'];
         
         $user->save();
 

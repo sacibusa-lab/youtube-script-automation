@@ -34,7 +34,7 @@
                                 <tr class="text-left border-b border-gray-100 dark:border-gray-700">
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">User</th>
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Current Plan</th>
-                                    <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Remaining Tokens (S / I)</th>
+                                    <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Tokens (S / I / V)</th>
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Stories</th>
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4">Role</th>
                                     <th class="pb-6 text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 text-right">Actions</th>
@@ -62,7 +62,10 @@
                                         <td class="py-6 px-4">
                                             <div class="flex flex-col">
                                                 <span class="text-xs font-black text-teal-600">{{ number_format($user->total_credits - $user->used_credits) }} S</span>
-                                                <span class="text-[10px] font-bold text-purple-500">{{ number_format($user->total_image_tokens - $user->used_image_tokens) }} I</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-[10px] font-bold text-rose-500">{{ number_format($user->total_image_tokens - $user->used_image_tokens) }} I</span>
+                                                    <span class="text-[10px] font-bold text-purple-500">{{ number_format($user->total_voice_tokens - $user->used_voice_tokens) }} V</span>
+                                                </div>
                                             </div>
                                         </td>
                                         <td class="py-6 px-4">

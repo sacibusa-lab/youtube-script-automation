@@ -28,7 +28,7 @@ class ProjectController extends Controller
         $userId = Auth::id();
         $search = $request->input('search');
         
-        $query = Video::with('chapters')
+        $query = Video::with(['chapters', 'scenes'])
             ->where('user_id', $userId);
 
         if ($search) {
@@ -50,11 +50,13 @@ class ProjectController extends Controller
             ])
             ->first();
 
+        $totalCompleted = Video::where('user_id', $userId)->with(['scenes', 'chapters'])->get()->filter(fn($v) => $v->isFullyReady())->count();
+
         return view('videos.index', [
             'videos' => $videos,
             'totalTokens' => $usageStats?->total_tokens ?? 0,
             'totalCost' => $usageStats?->total_cost ?? 0,
-            'totalCompleted' => Video::where('user_id', $userId)->where('status', 'completed')->count(),
+            'totalCompleted' => $totalCompleted,
         ]);
     }
 

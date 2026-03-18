@@ -67,8 +67,8 @@
 
                         <!-- Image Tokens -->
                         <div class="space-y-4">
-                            <h3 class="text-purple-400 text-[10px] font-black uppercase tracking-widest flex items-center">
-                                <span class="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></span>
+                            <h3 class="text-rose-400 text-[10px] font-black uppercase tracking-widest flex items-center">
+                                <span class="w-1.5 h-1.5 bg-rose-500 rounded-full mr-2"></span>
                                 Image Assets
                             </h3>
                             <div class="flex space-x-4">
@@ -77,8 +77,26 @@
                                     <input type="number" name="total_image_tokens" value="{{ $user->total_image_tokens }}" class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-0">
                                 </div>
                                 <div class="flex-1">
-                                    <label class="block text-[10px] text-gray-500 font-bold mb-1">Used (Script Count)</label>
+                                    <label class="block text-[10px] text-gray-500 font-bold mb-1">Used (Count)</label>
                                     <input type="number" name="used_image_tokens" value="{{ $user->used_image_tokens }}" class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voice Tokens -->
+                        <div class="space-y-4">
+                            <h3 class="text-purple-400 text-[10px] font-black uppercase tracking-widest flex items-center">
+                                <span class="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></span>
+                                Voice Tokens
+                            </h3>
+                            <div class="flex space-x-4">
+                                <div class="flex-1">
+                                    <label class="block text-[10px] text-gray-500 font-bold mb-1">Total Limit</label>
+                                    <input type="number" name="total_voice_tokens" value="{{ $user->total_voice_tokens }}" class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-0">
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-[10px] text-gray-500 font-bold mb-1">Used (Count)</label>
+                                    <input type="number" name="used_voice_tokens" value="{{ $user->used_voice_tokens }}" class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-0">
                                 </div>
                             </div>
                         </div>

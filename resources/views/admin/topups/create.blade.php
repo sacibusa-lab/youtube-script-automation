@@ -25,6 +25,10 @@
                             <input type="number" name="credits" value="100000" required class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-indigo-500 focus:ring-0">
                         </div>
                         <div class="space-y-2">
+                            <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest">Voice Tokens</label>
+                            <input type="number" name="voice_tokens" value="0" required class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-indigo-500 focus:ring-0">
+                        </div>
+                        <div class="space-y-2">
                             <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest">Sale Price (₦)</label>
                             <input type="number" name="price" value="5000" required class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-indigo-500 focus:ring-0">
                         </div>

@@ -99,6 +99,22 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="space-y-4">
+                            <h3 class="text-purple-600 dark:text-purple-400 text-xs font-black uppercase tracking-widest flex items-center">
+                                <span class="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                                Voice Synthesis
+                            </h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 font-bold uppercase mb-1.5 px-1">Monthly Voice Tokens</label>
+                                    <input type="number" name="monthly_voice_tokens" value="{{ old('monthly_voice_tokens', $plan->monthly_voice_tokens) }}" class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-teal-500 ring-0">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 font-bold uppercase mb-1.5 px-1">Voice Credit Cost (per scene)</label>
+                                    <input type="number" name="voice_token_cost" value="{{ old('voice_token_cost', $plan->voice_token_cost) }}" class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-teal-500 ring-0">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

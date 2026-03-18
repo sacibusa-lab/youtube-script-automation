@@ -17,20 +17,17 @@ class DashboardController extends Controller
         $userId = Auth::id();
 
         // Personal stats
-        $totalStories = Video::where('user_id', $userId)->count();
-        $generatingCount = Video::where('user_id', $userId)->whereIn('status', ['pending', 'generating_structure', 'generating_chapters', 'generating_scenes'])->count();
-        $completedCount = Video::where('user_id', $userId)->where('status', 'completed')->count();
+        $allProjects = Video::where('user_id', $userId)->with(['scenes', 'chapters'])->get();
+        $totalStories = $allProjects->count();
+        $generatingCount = $allProjects->whereIn('status', ['pending', 'generating_structure', 'generating_chapters', 'generating_scenes'])->count();
+        $completedCount = $allProjects->filter(fn($v) => $v->isFullyReady())->count();
 
         // AI Usage
         $totalTokens = DB::table('ai_usages')
             ->where('user_id', $userId)
             ->sum(DB::raw('input_tokens + output_tokens'));
-
         // Recent personal projects
-        $recentProjects = Video::where('user_id', $userId)
-            ->latest()
-            ->limit(4)
-            ->get();
+        $recentProjects = $allProjects->sortByDesc('created_at')->take(4);
             
         // Billing & Credits
         $user = Auth::user();
@@ -56,6 +53,18 @@ class DashboardController extends Controller
            $usagePercentage = ($user->used_credits / $user->total_credits) * 100;
         }
 
+        $imageTotal = $user->total_image_tokens;
+        $imageUsed = $user->used_image_tokens;
+        $imageRemaining = max(0, $imageTotal - $imageUsed);
+        $imagePercent = $imageTotal > 0 ? min(100, ($imageUsed / $imageTotal) * 100) : 0;
+
+        // Voice Token Stats
+        $voiceTotal = $user->total_voice_tokens;
+        $voiceUsed = $user->used_voice_tokens;
+        $voiceRemaining = $user->voiceTokensBalance();
+        $voicePercent = $user->voiceTokensFuelPercentage();
+        $voiceCostPerScene = $plan ? $plan->voice_token_cost : 50;
+
         return view('dashboard', compact(
             'totalStories',
             'generatingCount',
@@ -67,7 +76,16 @@ class DashboardController extends Controller
             'estimatedScriptsRemaining',
             'averageTokensPerScript',
             'usagePercentage',
-            'plan'
+            'plan',
+            'imageTotal',
+            'imageUsed',
+            'imageRemaining',
+            'imagePercent',
+            'voiceTotal',
+            'voiceUsed',
+            'voiceRemaining',
+            'voicePercent',
+            'voiceCostPerScene'
         ));
     }
 }

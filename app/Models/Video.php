@@ -74,6 +74,13 @@ class Video extends Model
         'platform_data' => 'array',
     ];
 
+    protected $appends = ['is_fully_ready'];
+
+    public function getIsFullyReadyAttribute()
+    {
+        return $this->isFullyReady();
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -148,5 +155,37 @@ class Video extends Model
     public function getMonthlyPlan()
     {
         return $this->monthly_plan['content'] ?? $this->monthly_plan ?? [];
+    }
+
+    /**
+     * Check if the story and all its sub-assets (images/audio) are fully generated.
+     */
+    public function isFullyReady()
+    {
+        // Use loaded relationships if available to avoid N+1 issues
+        if ($this->relationLoaded('chapters')) {
+            if ($this->chapters->count() === 0) return false;
+        } else {
+            if ($this->chapters()->count() === 0) return false;
+        }
+
+        if ($this->relationLoaded('scenes')) {
+            $totalScenes = $this->scenes->count();
+            if ($totalScenes === 0) return false;
+
+            $readyScenes = $this->scenes->whereNotNull('image_url')
+                ->whereNotNull('audio_path')
+                ->count();
+        } else {
+            $totalScenes = $this->scenes()->count();
+            if ($totalScenes === 0) return false;
+
+            $readyScenes = $this->scenes()
+                ->whereNotNull('image_url')
+                ->whereNotNull('audio_path')
+                ->count();
+        }
+
+        return $totalScenes === $readyScenes;
     }
 }

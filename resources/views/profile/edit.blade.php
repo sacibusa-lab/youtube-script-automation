@@ -61,10 +61,17 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Image Assets</span>
-                                <span class="text-sm font-black text-emerald-400">{{ number_format($imageBalance) }}</span>
+                                <span class="text-sm font-black text-rose-400">{{ number_format($imageBalance) }}</span>
                             </div>
                             <div class="w-full bg-zinc-800 rounded-full h-1.5">
-                                <div class="bg-emerald-500 h-1.5 rounded-full transition-all" style="width: {{ 100 - $imageUsedPct }}%"></div>
+                                <div class="bg-rose-500 h-1.5 rounded-full transition-all" style="width: {{ 100 - $imageUsedPct }}%"></div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Voice Tokens</span>
+                                <span class="text-sm font-black text-purple-400">{{ number_format($voiceBalance) }}</span>
+                            </div>
+                            <div class="w-full bg-zinc-800 rounded-full h-1.5">
+                                <div class="bg-purple-500 h-1.5 rounded-full transition-all" style="width: {{ 100 - $voiceUsedPct }}%"></div>
                             </div>
                         </div>
                         <a href="{{ route('topup.index') }}" class="w-full mt-2 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition text-center">
@@ -131,78 +138,116 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {{-- Current Plan Card --}}
-                <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-8 relative overflow-hidden">
-                    <div class="absolute -right-8 -top-8 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
-                    <p class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Current Plan</p>
-                    @if($user->plan)
-                        <h2 class="text-3xl font-black text-white mb-1">{{ $user->plan->name }}</h2>
-                        <p class="text-sm text-zinc-500 mb-6">{{ $user->plan->description ?? 'Your active subscription plan.' }}</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-                            <div class="bg-zinc-800/60 rounded-xl p-4 border border-zinc-700/50">
-                                <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Script Tokens</p>
-                                <p class="text-xl font-black text-indigo-400">{{ number_format($user->plan->credits ?? 0) }}</p>
-                                <p class="text-[9px] text-zinc-600">per month</p>
-                            </div>
-                            <div class="bg-zinc-800/60 rounded-xl p-4 border border-zinc-700/50">
-                                <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Image Assets</p>
-                                <p class="text-xl font-black text-emerald-400">{{ number_format($user->plan->image_tokens ?? 0) }}</p>
-                                <p class="text-[9px] text-zinc-600">per month</p>
-                            </div>
-                            <div class="bg-zinc-800/60 rounded-xl p-4 border border-zinc-700/50">
-                                <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Price</p>
-                                <p class="text-xl font-black text-white">₦{{ number_format($user->plan->price ?? 0) }}</p>
-                                <p class="text-[9px] text-zinc-600">per month</p>
-                            </div>
+                <div class="lg:col-span-3 bg-zinc-900 border border-zinc-800 rounded-2xl p-8 relative overflow-hidden mb-6">
+                    <div class="absolute -right-8 -top-8 w-40 h-40 bg-zinc-500/5 rounded-full blur-3xl"></div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <p class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Current Plan</p>
+                            @if($user->plan)
+                                <h2 class="text-3xl font-black text-white mb-1">{{ $user->plan->name }}</h2>
+                                <p class="text-sm text-zinc-500">{{ $user->plan->description ?? 'Your active subscription plan.' }}</p>
+                            @else
+                                <h2 class="text-3xl font-black text-white mb-1">No Active Plan</h2>
+                                <p class="text-sm text-zinc-500">You are currently using the platform's standard resources.</p>
+                            @endif
                         </div>
                         <div class="flex items-center gap-3">
-                            <a href="{{ route('topup.index') }}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition">
+                            <a href="{{ route('topup.index') }}" class="px-6 py-3 bg-white text-zinc-950 text-[10px] font-black uppercase tracking-widest rounded-xl transition hover:scale-105">
                                 Upgrade Plan
                             </a>
-                            <a href="{{ route('billing.history') }}" class="px-5 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition">
-                                View All Invoices
+                            <a href="{{ route('billing.history') }}" class="px-6 py-3 bg-zinc-800 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition hover:bg-zinc-700">
+                                View Billing
                             </a>
                         </div>
-                    @else
-                        <div class="py-8 text-center">
-                            <p class="text-zinc-500 text-sm font-bold mb-4">No active plan found.</p>
-                            <a href="{{ route('topup.index') }}" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition">
-                                Choose a Plan
-                            </a>
-                        </div>
-                    @endif
+                    </div>
                 </div>
 
-                {{-- Token Usage Summary --}}
-                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
-                    <p class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">This Month's Usage</p>
-                    <div class="space-y-5">
-                        <div>
-                            <div class="flex justify-between mb-1.5">
-                                <span class="text-xs font-bold text-zinc-400">Script Tokens</span>
-                                <span class="text-xs font-black text-white">{{ $scriptUsedPct }}% used</span>
+                {{-- Resource Ecosystem Grid --}}
+                <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Script Card -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 group">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </div>
-                            <div class="w-full bg-zinc-800 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-indigo-600 to-indigo-400 h-2 rounded-full transition-all" style="width: {{ $scriptUsedPct }}%"></div>
-                            </div>
-                            <div class="flex justify-between mt-1">
-                                <span class="text-[9px] text-zinc-600">{{ number_format($user->used_credits) }} used</span>
-                                <span class="text-[9px] text-zinc-600">{{ number_format($user->total_credits) }} total</span>
+                            <div>
+                                <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Script Engine</h4>
+                                <p class="text-lg font-black text-white leading-none tracking-tight">{{ number_format($scriptBalance) }}</p>
                             </div>
                         </div>
-                        <div>
-                            <div class="flex justify-between mb-1.5">
-                                <span class="text-xs font-bold text-zinc-400">Image Assets</span>
-                                <span class="text-xs font-black text-white">{{ $imageUsedPct }}% used</span>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-[9px] font-black uppercase tracking-widest mb-1.5 px-0.5">
+                                    <span class="text-teal-400">Fuel Level</span>
+                                    <span class="text-zinc-500">{{ round(100 - $scriptUsedPct) }}%</span>
+                                </div>
+                                <div class="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                    <div class="h-1.5 bg-teal-500 rounded-full transition-all duration-700" style="width: {{ 100 - $scriptUsedPct }}%"></div>
+                                </div>
                             </div>
-                            <div class="w-full bg-zinc-800 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-emerald-600 to-emerald-400 h-2 rounded-full transition-all" style="width: {{ $imageUsedPct }}%"></div>
-                            </div>
-                            <div class="flex justify-between mt-1">
-                                <span class="text-[9px] text-zinc-600">{{ number_format($user->used_image_tokens) }} used</span>
-                                <span class="text-[9px] text-zinc-600">{{ number_format($user->total_image_tokens) }} total</span>
+                            <div class="flex justify-between items-center py-2 px-3 bg-zinc-800/50 rounded-xl border border-zinc-700/30">
+                                <p class="text-[9px] font-black text-zinc-500 uppercase">Monthly Allocation</p>
+                                <p class="text-xs font-black text-white">{{ number_format($user->plan?->credits ?? 0) }}</p>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Visual Card -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 group">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Visual Studio</h4>
+                                <p class="text-lg font-black text-white leading-none tracking-tight">{{ number_format($imageBalance) }}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-[9px] font-black uppercase tracking-widest mb-1.5 px-0.5">
+                                    <span class="text-rose-400">Fuel Level</span>
+                                    <span class="text-zinc-500">{{ round(100 - $imageUsedPct) }}%</span>
+                                </div>
+                                <div class="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                    <div class="h-1.5 bg-rose-500 rounded-full transition-all duration-700" style="width: {{ 100 - $imageUsedPct }}%"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center py-2 px-3 bg-zinc-800/50 rounded-xl border border-zinc-700/30">
+                                <p class="text-[9px] font-black text-zinc-500 uppercase">Monthly Allocation</p>
+                                <p class="text-xs font-black text-white">{{ number_format($user->plan?->image_tokens ?? 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Card -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 group">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Voice Laboratory</h4>
+                                <p class="text-lg font-black text-white leading-none tracking-tight">{{ number_format($voiceBalance) }}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-[9px] font-black uppercase tracking-widest mb-1.5 px-0.5">
+                                    <span class="text-purple-400">Fuel Level</span>
+                                    <span class="text-zinc-500">{{ round(100 - $voiceUsedPct) }}%</span>
+                                </div>
+                                <div class="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                    <div class="h-1.5 bg-purple-500 rounded-full transition-all duration-700" style="width: {{ 100 - $voiceUsedPct }}%"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center py-2 px-3 bg-zinc-800/50 rounded-xl border border-zinc-700/30">
+                                <p class="text-[9px] font-black text-zinc-500 uppercase">Monthly Allocation</p>
+                                <p class="text-xs font-black text-white">{{ number_format($user->plan?->monthly_voice_tokens ?? 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                     {{-- Recent Usage Log --}}
                     @if($recentUsage->count() > 0)

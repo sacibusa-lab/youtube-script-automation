@@ -10,6 +10,7 @@ class TopupPackage extends Model
     protected $fillable = [
         'name',
         'credits',
+        'voice_tokens',
         'price',
         'is_active',
     ];

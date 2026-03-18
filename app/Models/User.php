@@ -31,6 +31,8 @@ class User extends Authenticatable
         'used_credits',
         'total_image_tokens',
         'used_image_tokens',
+        'total_voice_tokens',
+        'used_voice_tokens',
         'plan_id',
         'last_rollover_at',
         'credits_used_this_month',
@@ -43,6 +45,9 @@ class User extends Authenticatable
         if ($type === 'image') {
             return ($this->total_image_tokens - $this->used_image_tokens) >= $amount;
         }
+        if ($type === 'voice') {
+            return ($this->total_voice_tokens - $this->used_voice_tokens) >= $amount;
+        }
         return ($this->total_credits - $this->used_credits) >= $amount;
     }
 
@@ -50,6 +55,8 @@ class User extends Authenticatable
     {
         if ($type === 'image') {
             $this->used_image_tokens += $amount;
+        } elseif ($type === 'voice') {
+            $this->used_voice_tokens += $amount;
         } else {
             $this->used_credits += $amount;
             $this->credits_used_this_month += $amount; // Optionally track monthly script tokens if you want
@@ -115,6 +122,11 @@ class User extends Authenticatable
         return (int) max(0, $this->total_image_tokens - $this->used_image_tokens);
     }
 
+    public function voiceTokensBalance(): int
+    {
+        return (int) max(0, $this->total_voice_tokens - $this->used_voice_tokens);
+    }
+
     public function creditReservations(): HasMany
     {
         return $this->hasMany(CreditReservation::class);
@@ -152,10 +164,17 @@ class User extends Authenticatable
         return ($this->imageTokensBalance() / $this->total_image_tokens) * 100;
     }
 
+    public function voiceTokensFuelPercentage(): float
+    {
+        if ($this->total_voice_tokens <= 0) return 0;
+        return ($this->voiceTokensBalance() / $this->total_voice_tokens) * 100;
+    }
+
     public function isLowOnCredits(): bool
     {
-        // Low is defined as <= 10% on either script or image tokens
+        // Low is defined as <= 10% on either script, image, or voice tokens
         return ($this->scriptCreditsFuelPercentage() <= 10 && $this->total_credits > 0) || 
-               ($this->imageTokensFuelPercentage() <= 10 && $this->total_image_tokens > 0);
+               ($this->imageTokensFuelPercentage() <= 10 && $this->total_image_tokens > 0) ||
+               ($this->voiceTokensFuelPercentage() <= 10 && $this->total_voice_tokens > 0);
     }
 }

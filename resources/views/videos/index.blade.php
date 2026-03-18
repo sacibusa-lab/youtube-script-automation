@@ -71,21 +71,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 @forelse($videos as $video)
                     <!-- Antigravity Card -->
-                    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 relative group overflow-hidden transition-all duration-300 hover:border-zinc-700 hover:shadow-2xl hover:shadow-red-900/10">
+                    @php $isReady = $video->isFullyReady(); @endphp
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 relative group overflow-hidden transition-all duration-300 hover:border-zinc-700 hover:shadow-2xl {{ $isReady ? 'hover:shadow-green-900/20' : 'hover:shadow-red-900/10' }}">
                         
                         <!-- Header: Badges -->
                         <div class="flex justify-end items-start gap-2 mb-8">
                             <span class="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
                                 {{ strtoupper($video->tier1_country ?? 'USA') }}
                             </span>
-                            <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-[0_0_10px_rgba(220,38,38,0.4)]">
+                            <span class="{{ $isReady ? 'bg-green-600 shadow-[0_0_10px_rgba(22,163,74,0.4)]' : 'bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.4)]' }} text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
                                 {{ strtoupper($video->niche ?? 'Mystery') }}
                             </span>
                         </div>
 
                         <!-- Title -->
                         <a href="{{ route('projects.show', $video) }}" class="block mb-6 relative z-10">
-                            <h3 class="font-bold text-[18px] text-white leading-snug line-clamp-3 hover:text-red-500 transition-colors">
+                            <h3 class="font-bold text-[18px] text-white leading-snug line-clamp-3 {{ $isReady ? 'hover:text-green-500' : 'hover:text-red-500' }} transition-colors">
                                 {{ $video->selected_title ?? $video->topic }}
                             </h3>
                         </a>
@@ -110,10 +111,10 @@
                                 <a href="{{ route('projects.show', $video) }}" class="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] hover:text-white transition-colors">
                                     View Story
                                 </a>
-                                <!-- Red Progress Bar -->
+                                <!-- Progress Bar -->
                                 <div class="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-red-600 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.6)]" 
-                                         style="width: @if($video->status === 'completed') 100% @elseif($video->status === 'failed') 100% @else 45% @endif"></div>
+                                    <div class="h-full {{ $isReady ? 'bg-green-600 shadow-[0_0_8px_rgba(22,163,74,0.6)]' : 'bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.6)]' }} rounded-full" 
+                                         style="width: @if($isReady || $video->status === 'completed' || $video->status === 'assembling' || $video->status === 'failed') 100% @else 45% @endif"></div>
                                 </div>
                             </div>
 

@@ -276,9 +276,14 @@
                 <!-- Token Usage UI -->
                 <div x-data="{ 
                         scriptCredits: {{ Auth::user()->scriptCreditsBalance() ?? 0 }}, 
-                        imageTokens: {{ Auth::user()->imageTokensBalance() ?? 0 }} 
+                        imageTokens: {{ Auth::user()->imageTokensBalance() ?? 0 }},
+                        voiceTokens: {{ Auth::user()->voiceTokensBalance() ?? 0 }}
                      }" 
-                     @tokens-updated.window="scriptCredits = $event.detail.script_credits || 0; imageTokens = $event.detail.image_tokens || 0"
+                     @tokens-updated.window="
+                        scriptCredits = $event.detail.script_credits !== undefined ? $event.detail.script_credits : scriptCredits; 
+                        imageTokens = $event.detail.image_tokens !== undefined ? $event.detail.image_tokens : imageTokens;
+                        voiceTokens = $event.detail.voice_tokens !== undefined ? $event.detail.voice_tokens : voiceTokens;
+                     "
                      class="hidden md:flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700/50 transition-colors">
                     
                     <div class="flex items-center gap-1.5" title="Script Credits">
@@ -289,8 +294,15 @@
                     <div class="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
 
                     <div class="flex items-center gap-1.5" title="Image Tokens">
-                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         <span class="text-xs font-bold font-outfit text-zinc-700 dark:text-zinc-300" x-text="imageTokens">{{ Auth::user()->imageTokensBalance() ?? 0 }}</span>
+                    </div>
+
+                    <div class="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
+
+                    <div class="flex items-center gap-1.5" title="Voice Tokens">
+                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                        <span class="text-xs font-bold font-outfit text-zinc-700 dark:text-zinc-300" x-text="voiceTokens">{{ Auth::user()->voiceTokensBalance() ?? 0 }}</span>
                     </div>
                 </div>
 

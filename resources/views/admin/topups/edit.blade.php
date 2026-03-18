@@ -26,6 +26,10 @@
                             <input type="number" name="credits" value="{{ old('credits', $package->credits) }}" required class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-indigo-500 focus:ring-0 transition-all">
                         </div>
                         <div class="space-y-2">
+                            <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest">Voice Tokens</label>
+                            <input type="number" name="voice_tokens" value="{{ old('voice_tokens', $package->voice_tokens) }}" required class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-indigo-500 focus:ring-0 transition-all">
+                        </div>
+                        <div class="space-y-2">
                             <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest">Sale Price (₦)</label>
                             <input type="number" name="price" value="{{ old('price', $package->price) }}" required class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-gray-950 dark:text-white font-bold focus:border-indigo-500 focus:ring-0 transition-all">
                         </div>

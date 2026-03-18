@@ -61,7 +61,15 @@
                                 <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Free Images</span>
                                 <span class="text-sm font-black text-teal-600 dark:text-teal-400">{{ number_format($plan->monthly_image_tokens) }} / mo</span>
                             </div>
+                            <div class="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/50 pt-4">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Monthly Voice Tokens</span>
+                                <span class="text-sm font-black text-purple-600 dark:text-purple-400">{{ number_format($plan->monthly_voice_tokens) }} tokens</span>
+                            </div>
                             <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Voice Generation Cost</span>
+                                <span class="text-sm font-black text-purple-600 dark:text-purple-400">{{ number_format($plan->voice_token_cost) }} / scene</span>
+                            </div>
+                            <div class="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/50 pt-4">
                                 <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Script Image Cap</span>
                                 <span class="text-sm font-black text-gray-900 dark:text-zinc-200">{{ number_format($plan->max_images_per_script) }} imgs</span>
                             </div>
