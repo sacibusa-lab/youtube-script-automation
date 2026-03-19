@@ -65,32 +65,47 @@ class VoiceOverService
                 mkdir(dirname($outputPath), 0777, true);
             }
 
-            $command = sprintf(
-                "python %s --text %s --voice %s --output %s --model %s --voices_bin %s --speed %s --volume %s",
-                escapeshellarg($bridgePath),
-                escapeshellarg($text),
-                escapeshellarg($voice),
-                escapeshellarg($outputPath),
-                escapeshellarg($modelPath),
-                escapeshellarg($voicesPath),
-                escapeshellarg($speed),
-                escapeshellarg($volume)
-            );
+            // check if python or python3 is available
+            $python = "python";
+            if (PHP_OS_FAMILY !== 'Windows') {
+                $python = "python3"; // Common for Linux/Ubuntu servers
+            }
 
-            $output = shell_exec($command . ' 2>&1');
+            $result = \Illuminate\Support\Facades\Process::run([
+                $python,
+                $bridgePath,
+                '--text', $text,
+                '--voice', $voice,
+                '--output', $outputPath,
+                '--model', $modelPath,
+                '--voices_bin', $voicesPath,
+                '--speed', (string)$speed,
+                '--volume', (string)$volume
+            ]);
+
+            $output = $result->output();
             
+            if (!$result->successful()) {
+                Log::error("Local Kokoro Bridge Failed", [
+                    'error' => $result->errorOutput(),
+                    'exit_code' => $result->exitCode(),
+                    'output' => $output
+                ]);
+                return null;
+            }
+
             // Extract JSON from output (it might contain debug info before the JSON string)
             $jsonStart = strpos($output, '{');
             $jsonEnd = strrpos($output, '}');
             
             if ($jsonStart !== false && $jsonEnd !== false) {
                 $jsonContent = substr($output, $jsonStart, $jsonEnd - $jsonStart + 1);
-                $result = json_decode($jsonContent, true);
+                $data = json_decode($jsonContent, true);
             } else {
-                $result = null;
+                $data = null;
             }
 
-            if ($result && isset($result['success']) && $result['success']) {
+            if ($data && isset($data['success']) && $data['success']) {
                 $scene->update([
                     'audio_path' => $relativePath,
                     'voice_id' => $voice
@@ -99,12 +114,18 @@ class VoiceOverService
                 return $relativePath;
             }
 
-            Log::error("Local Kokoro Bridge Failed", [
-                'error' => $result['error'] ?? 'Unknown error',
-                'raw_output' => $output,
-                'command' => $command
+            Log::error("Local Kokoro Bridge Data Processing Failed", [
+                'error' => $data['error'] ?? 'No JSON result found',
+                'raw_output' => $output
             ]);
 
+        } catch (\Error $e) {
+            // Specifically catch "Call to undefined function" which is an Error in PHP 7+
+            if (str_contains($e->getMessage(), 'shell_exec') || str_contains($e->getMessage(), 'proc_open')) {
+                Log::error("CRITICAL: PHP execution functions (proc_open/shell_exec) are disabled on this server. Please enable them in php.ini to use Kokoro TTS.");
+            } else {
+                Log::error("Local Kokoro Bridge Error", ['message' => $e->getMessage()]);
+            }
         } catch (\Exception $e) {
             Log::error("Local Kokoro Bridge Exception", ['message' => $e->getMessage()]);
         }
