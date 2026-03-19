@@ -41,17 +41,23 @@ class Scene extends Model
 
         // If it's already an absolute URL (legacy), sanitize it
         if (filter_var($value, FILTER_VALIDATE_URL)) {
-            // Strip old domains if they exist, but keep remote provider URLs (e.g. S3/Cloudinary)
-            // If it's a local storage URL from a different domain, we want to try to make it relative
+            // Strip old domains and redundant storage prefixes
             if (str_contains($value, '/storage/')) {
-                $path = explode('/storage/', $value)[1];
+                $path = explode('/storage/', $value);
+                $path = end($path); // Get the part after the last /storage/
+                $path = ltrim($path, '/');
                 return asset('storage/' . $path);
             }
             return $value;
         }
 
-        // If it's a relative path, use Storage::url()
-        return \Illuminate\Support\Facades\Storage::url($value);
+        // If it's a relative path, ensure it doesn't already have 'storage/' prefix
+        $path = ltrim($value, '/');
+        if (str_starts_with($path, 'storage/')) {
+            $path = substr($path, 8);
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($path);
     }
 
     public function video()

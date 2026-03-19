@@ -37,13 +37,20 @@ class GeneratedTitle extends Model
 
         if (filter_var($value, FILTER_VALIDATE_URL)) {
             if (str_contains($value, '/storage/')) {
-                $path = explode('/storage/', $value)[1];
+                $path = explode('/storage/', $value);
+                $path = end($path);
+                $path = ltrim($path, '/');
                 return asset('storage/' . $path);
             }
             return $value;
         }
 
-        return \Illuminate\Support\Facades\Storage::url($value);
+        $path = ltrim($value, '/');
+        if (str_starts_with($path, 'storage/')) {
+            $path = substr($path, 8);
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($path);
     }
 
     public function video()
