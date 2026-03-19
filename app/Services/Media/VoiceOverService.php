@@ -50,8 +50,8 @@ class VoiceOverService
         }
 
         // 1. API Mode (Bypasses shell_exec restrictions)
-        // Only use API if the base_url is NOT the default localhost bridge placeholder
-        if (!empty($this->baseUrl) && !str_contains($this->baseUrl, 'localhost:8880')) {
+        // Only use API if the base_url is explicitly configured in .env
+        if (!empty($this->baseUrl)) {
             try {
                 Log::info("Generating Kokoro voice-over via API for Scene #{$scene->id}", ['url' => $this->baseUrl]);
                 

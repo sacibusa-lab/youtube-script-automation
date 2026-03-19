@@ -40,7 +40,7 @@ return [
     ],
     
     'kokoro' => [
-        'base_url' => env('KOKORO_BASE_URL', 'http://localhost:8880/v1'), // Default back to local or bridge
+        'base_url' => env('KOKORO_BASE_URL'), // Standalone API mode (Local API or Remote)
         'default_voice' => env('KOKORO_DEFAULT_VOICE', 'af_heart'),
     ],
 
