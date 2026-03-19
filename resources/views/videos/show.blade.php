@@ -22,17 +22,19 @@
                     {{ $project->status === 'waiting_for_title_selection' || in_array($project->status, ['generating_concepts','generating_strategies','architecting_chapters','generating_structure']) ? '' : 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800' }}
                 ">{{ str_replace('_', ' ', $project->status) }}</span>
 
-                @if(in_array($project->status, ['approved', 'completed']))
-                <a href="{{ route('projects.studio', $project) }}" class="flex items-center gap-2 px-4 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 dark:hover:bg-rose-500 transition shadow-lg">
-                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.477.859h4z"></path></svg>
-                    <span>Open Studio</span>
-                </a>
-                @else
-                <div class="flex items-center gap-2 px-4 py-1.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-zinc-300 dark:border-zinc-700 cursor-not-allowed group relative">
-                    <svg class="w-3.5 h-3.5 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path></svg>
-                    <span>Studio Locked</span>
-                    <div class="absolute bottom-full mb-2 hidden group-hover:block bg-black text-white text-[8px] p-2 rounded whitespace-nowrap z-50">Chapters must be finalized/approved first.</div>
-                </div>
+                @if(Auth::user()->isAdmin())
+                    @if(in_array($project->status, ['approved', 'completed']))
+                    <a href="{{ route('admin.projects.studio', $project) }}" class="flex items-center gap-2 px-4 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 dark:hover:bg-rose-500 transition shadow-lg">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.477.859h4z"></path></svg>
+                        <span>Open Studio</span>
+                    </a>
+                    @else
+                    <div class="flex items-center gap-2 px-4 py-1.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-zinc-300 dark:border-zinc-700 cursor-not-allowed group relative">
+                        <svg class="w-3.5 h-3.5 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path></svg>
+                        <span>Studio Locked</span>
+                        <div class="absolute bottom-full mb-2 hidden group-hover:block bg-black text-white text-[8px] p-2 rounded whitespace-nowrap z-50">Chapters must be finalized/approved first.</div>
+                    </div>
+                    @endif
                 @endif
             </div>
         </div>

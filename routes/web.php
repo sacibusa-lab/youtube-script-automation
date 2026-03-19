@@ -38,7 +38,6 @@ Route::middleware('auth')->group(function () {
 
     // Projects (Story Marathons)
     Route::resource('projects', ProjectController::class);
-    Route::get('/studio', [ProjectController::class, 'studioIndex'])->name('studio.index');
     Route::get('/bookmarks', [ProjectController::class, 'bookmarks'])->name('projects.bookmarks');
     Route::post('/projects/titles/{title}/toggle-bookmark', [ProjectController::class, 'toggleBookmark'])->name('projects.titles.toggle-bookmark');
     Route::get('/projects/titles/{title}/status', [ProjectController::class, 'checkTitleStatus'])->name('projects.titles.status');
@@ -58,13 +57,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/regenerate-thumbnail', [ProjectController::class, 'regenerateThumbnail'])->name('projects.regenerate-thumbnail');
     Route::post('/projects/titles/{title}/clone', [ProjectController::class, 'cloneFromConcept'])->name('projects.clone');
     Route::post('/projects/titles/{title}/generate-image', [ProjectController::class, 'generateThumbnailImage'])->name('projects.titles.generate-image');
-    Route::get('/projects/{project}/studio', [ProjectController::class, 'studio'])->name('projects.studio');
-    Route::post('/projects/{project}/studio/save', [ProjectController::class, 'saveStudioState'])->name('projects.studio.save');
+    Route::get('/projects/{project}/export', [ProjectController::class, 'export'])->name('projects.export');
+    Route::post('/projects/{project}/chapters/{chapter}/architect', [ProjectController::class, 'architectChapter'])->name('projects.chapters.architect');
     Route::post('/projects/{project}/assemble', [ProjectController::class, 'assembleVideo'])->name('projects.assemble');
     Route::post('/projects/{project}/scenes/{scene}/generate-voice', [ProjectController::class, 'generateSceneVoice'])->name('projects.scenes.generate-voice');
     Route::post('/projects/{project}/bulk-generate-voice', [ProjectController::class, 'bulkGenerateVoices'])->name('projects.bulk-generate-voice');
 
-    // Dedicated Voice Generation Studio
+    // VOICE LABORATORY (Public Access)
     Route::get('/voice-generation', [\App\Http\Controllers\VoiceGenerationController::class, 'index'])->name('voice-generation.index');
     Route::post('/voice-generation/generate', [\App\Http\Controllers\VoiceGenerationController::class, 'generate'])->name('voice-generation.generate');
     Route::post('/voice-generation/bulk-generate', [\App\Http\Controllers\VoiceGenerationController::class, 'bulkGenerate'])->name('voice-generation.bulk-generate');
@@ -115,6 +114,12 @@ Route::middleware('auth')->group(function () {
 
         // Global Story Logs
         Route::get('/story-logs', [\App\Http\Controllers\Admin\ProjectController::class, 'index'])->name('projects.index');
+
+        // PRODUCTION STUDIO (Internal Development)
+        Route::get('/production-studio', [ProjectController::class, 'studioIndex'])->name('studio.index');
+        Route::get('/projects/{project}/studio', [ProjectController::class, 'studio'])->name('projects.studio');
+        Route::post('/projects/{project}/studio/save', [ProjectController::class, 'saveStudioState'])->name('projects.studio.save');
+
     });
 });
 

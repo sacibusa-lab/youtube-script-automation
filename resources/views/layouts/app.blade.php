@@ -150,24 +150,26 @@
 
         <!-- Navigation -->
         <nav class="flex-1 space-y-1 overflow-y-auto px-1">
-            <p class="px-4 text-[10px] font-black text-rose-500/80 dark:text-rose-400/80 uppercase tracking-[0.2em] mb-3 mt-4">Creative Suite</p>
+            @if(Auth::user()->isAdmin())
+                <p class="px-4 text-[10px] font-black text-rose-500/80 dark:text-rose-400/80 uppercase tracking-[0.2em] mb-3 mt-4">Creative Suite</p>
 
-            <a href="{{ route('studio.index') }}" class="sidebar-link {{ request()->routeIs('studio.*') ? 'active' : '' }} gap-3.5 group">
-                <svg class="w-5 h-5 opacity-70 group-hover:text-rose-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                <div class="flex items-center justify-between flex-1">
-                    <span>Production Studio</span>
-                    <span class="text-[8px] font-black bg-rose-500/10 text-rose-500 px-1.5 py-0.5 rounded leading-none uppercase tracking-tighter">PRO</span>
-                </div>
+                <a href="{{ route('admin.studio.index') }}" class="sidebar-link {{ request()->routeIs('admin.studio.*') ? 'active' : '' }} gap-3.5 group">
+                    <svg class="w-5 h-5 opacity-70 group-hover:text-rose-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <div class="flex items-center justify-between flex-1">
+                        <span>Production Studio</span>
+                        <span class="text-[8px] font-black bg-rose-500/10 text-rose-500 px-1.5 py-0.5 rounded leading-none uppercase tracking-tighter">PRO</span>
+                    </div>
+                </a>
+            @endif
+
+            <a href="{{ route('projects.create') }}" class="sidebar-link {{ request()->routeIs('projects.create') ? 'active' : '' }} gap-3.5">
+                <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                <span>New Story</span>
             </a>
 
             <a href="{{ route('voice-generation.index') }}" class="sidebar-link {{ request()->routeIs('voice-generation.*') ? 'active' : '' }} gap-3.5">
                 <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                 <span>Voice Generation</span>
-            </a>
-
-            <a href="{{ route('projects.create') }}" class="sidebar-link {{ request()->routeIs('projects.create') ? 'active' : '' }} gap-3.5">
-                <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                <span>New Story</span>
             </a>
 
             <a href="{{ route('projects.index') }}" class="sidebar-link {{ request()->routeIs('projects.index') ? 'active' : '' }} gap-3.5">

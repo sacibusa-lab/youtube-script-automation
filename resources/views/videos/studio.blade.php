@@ -317,7 +317,7 @@
         async saveState() {
             this.isSaving = true;
             try {
-                const res = await fetch('{{ route('projects.studio.save', $project) }}', {
+                const res = await fetch('{{ route('admin.projects.studio.save', $project) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
