@@ -73,7 +73,7 @@
     <div class="container">
         <div class="card">
             <a href="{{ config('app.url') }}" class="logo">
-                {{ config('app.name', 'StoryBee') }}
+                {{ config('app.name', 'ViralStories AI') }}
             </a>
             
             <h1>Verify your email address</h1>

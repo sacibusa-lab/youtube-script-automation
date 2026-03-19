@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pricing Plans | Axelit StoryBee</title>
+    <title>Pricing Plans | ViralStories AI</title>
 
     <!-- Fonts: Outfit & Public Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,7 +74,7 @@
                     <div class="w-10 h-10 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
-                    <span class="text-xl font-outfit font-black tracking-tighter uppercase whitespace-nowrap">Axelit <span class="text-teal-500">StoryBee</span></span>
+                    <span class="text-xl font-outfit font-black tracking-tighter uppercase whitespace-nowrap">ViralStories <span class="text-teal-500">AI</span></span>
                 </a>
             </div>
 
@@ -174,7 +174,7 @@
             </div>
 
             <div class="mt-20 glass p-8 rounded-[2.5rem] border-dashed border-white/10 text-center">
-                <p class="text-zinc-500 text-sm font-medium italic">Running a larger operation? <a href="mailto:support@axelit.media" class="text-teal-500 underline">Contact us for customized enterprise solutions.</a></p>
+                <p class="text-zinc-500 text-sm font-medium italic">Running a larger operation? <a href="mailto:support@viralstoriesai.com" class="text-teal-500 underline">Contact us for customized enterprise solutions.</a></p>
             </div>
         </div>
     </section>
@@ -183,9 +183,9 @@
     <footer class="py-20 px-6 border-t border-white/5">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
             <div class="flex items-center gap-2">
-                <span class="text-xl font-outfit font-black tracking-tighter uppercase whitespace-nowrap">Axelit <span class="text-teal-500">StoryBee</span></span>
+                <span class="text-xl font-outfit font-black tracking-tighter uppercase whitespace-nowrap">ViralStories <span class="text-teal-500">AI</span></span>
             </div>
-            <p class="text-sm text-zinc-500 font-medium">&copy; {{ date('Y') }} Axelit Media. All rights reserved.</p>
+            <p class="text-sm text-zinc-500 font-medium">&copy; {{ date('Y') }} ViralStories AI. All rights reserved.</p>
         </div>
     </footer>
 </body>

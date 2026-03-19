@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ $siteSettings['platform_name'] ?? config('app.name', 'StoryBee') }}</title>
+        <title>{{ $siteSettings['platform_name'] ?? config('app.name', 'ViralStories AI') }}</title>
 
         @if(isset($siteSettings['favicon']))
             <link rel="icon" type="image/png" href="{{ Storage::url($siteSettings['favicon']) }}">

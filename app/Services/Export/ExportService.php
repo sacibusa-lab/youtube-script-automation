@@ -47,7 +47,7 @@ class ExportService
     public function exportAssets(int $videoId): ?string
     {
         $video = Video::with(['chapters.scenes'])->findOrFail($videoId);
-        $zipFileName = "storybee_project_{$videoId}.zip";
+        $zipFileName = "viralstories_project_{$videoId}.zip";
         $zipFilePath = storage_path("app/public/exports/{$zipFileName}");
 
         // Ensure directory exists
