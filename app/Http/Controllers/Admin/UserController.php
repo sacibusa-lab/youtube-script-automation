@@ -61,6 +61,7 @@ class UserController extends Controller
             'used_image_tokens' => 'required|numeric|min:0',
             'total_voice_tokens' => 'required|numeric|min:0',
             'used_voice_tokens' => 'required|numeric|min:0',
+            'is_admin' => 'sometimes|boolean',
         ]);
 
         $oldTiers = $user->only(['plan_id', 'total_credits']);
@@ -72,6 +73,9 @@ class UserController extends Controller
         $user->used_image_tokens = $validated['used_image_tokens'];
         $user->total_voice_tokens = $validated['total_voice_tokens'];
         $user->used_voice_tokens = $validated['used_voice_tokens'];
+        if (isset($validated['is_admin'])) {
+            $user->is_admin = $validated['is_admin'];
+        }
         
         $user->save();
 

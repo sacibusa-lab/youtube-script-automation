@@ -43,11 +43,14 @@ class SyncUserCredits extends Command
             $user->credits_used_this_month = 0;
             $user->total_image_tokens      = $user->plan->monthly_image_tokens;
             $user->used_image_tokens       = 0;
+            $user->total_voice_tokens      = $user->plan->monthly_voice_tokens;
+            $user->used_voice_tokens       = 0;
             $user->save();
 
             $this->line("✓  User {$user->id} ({$user->email}) — <info>{$user->plan->name}</info> plan → " .
                         number_format($user->total_credits) . " script tokens, " .
-                        number_format($user->total_image_tokens) . " image tokens");
+                        number_format($user->total_image_tokens) . " image tokens, " .
+                        number_format($user->total_voice_tokens) . " voice tokens");
             $fixed++;
         }
 

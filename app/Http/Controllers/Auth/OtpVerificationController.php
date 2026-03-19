@@ -40,7 +40,7 @@ class OtpVerificationController extends Controller
         $user = $request->user();
 
         // 1. Check if OTP matches
-        if ($user->otp_code !== strtoupper($request->otp_code)) {
+        if ($user->otp_code !== strtoupper(trim($request->otp_code))) {
             return back()->withErrors(['otp_code' => 'The verification code is incorrect.']);
         }
 

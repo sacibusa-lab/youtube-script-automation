@@ -37,8 +37,8 @@ class ProcessMonthlyRollover extends Command
                 continue;
             }
 
-            $remainingScripts = $user->total_credits - $user->used_credits;
             $remainingImages  = $user->total_image_tokens - $user->used_image_tokens;
+            $remainingVoice   = $user->total_voice_tokens - $user->used_voice_tokens;
             $rollover         = $user->plan->rollover_percent;
 
             $scriptRollover = $rollover > 0 
@@ -47,11 +47,15 @@ class ProcessMonthlyRollover extends Command
             $imageRollover  = $rollover > 0
                 ? min($remainingImages, ($rollover / 100) * $user->plan->monthly_image_tokens)
                 : 0;
+            $voiceRollover  = $rollover > 0
+                ? min($remainingVoice, ($rollover / 100) * $user->plan->monthly_voice_tokens)
+                : 0;
 
             $this->line(
                 "✓  User {$user->id} ({$user->email}) — <info>{$user->plan->name}</info> | " .
                 "Scripts: " . number_format($user->plan->monthly_credits) . " + " . number_format($scriptRollover) . " rollover | " .
-                "Images: " . number_format($user->plan->monthly_image_tokens) . " + " . number_format($imageRollover) . " rollover"
+                "Images: " . number_format($user->plan->monthly_image_tokens) . " + " . number_format($imageRollover) . " rollover | " .
+                "Voice: " . number_format($user->plan->monthly_voice_tokens) . " + " . number_format($voiceRollover) . " rollover"
             );
 
             if (!$isDryRun) {

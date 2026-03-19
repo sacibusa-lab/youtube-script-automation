@@ -293,6 +293,8 @@ class PaymentController extends Controller
         $user->daily_credits_reset_at  = now();
         $user->total_image_tokens      = $plan->monthly_image_tokens;
         $user->used_image_tokens       = 0;
+        $user->total_voice_tokens      = $plan->monthly_voice_tokens;
+        $user->used_voice_tokens       = 0;
         $user->last_rollover_at        = now();
         $user->save();
         
@@ -312,6 +314,7 @@ class PaymentController extends Controller
         $this->recordPayment($user, $amount, 'topup', $reference, null, $package->id);
 
         $user->total_credits += $package->credits;
+        $user->total_voice_tokens += $package->voice_tokens;
         $user->save();
     }
 

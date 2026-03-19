@@ -54,7 +54,9 @@ class DashboardController extends Controller
         }
 
         $imageTotal = $user->total_image_tokens;
-        $imageUsed = $user->used_image_tokens;
+        $imageUsed  = $user->used_image_tokens;
+        $voiceTotal = $user->total_voice_tokens;
+        $voiceUsed  = $user->used_voice_tokens;
         $imageRemaining = max(0, $imageTotal - $imageUsed);
         $imagePercent = $imageTotal > 0 ? min(100, ($imageUsed / $imageTotal) * 100) : 0;
 

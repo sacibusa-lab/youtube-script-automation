@@ -322,6 +322,16 @@ class BillingService
             $imageRolloverAmount  = min($remainingImages, $allowedImageRollover);
         }
 
+        // Voice Tokens Rollover
+        $remainingVoice     = $user->total_voice_tokens - $user->used_voice_tokens;
+        $voiceRolloverAmount = 0;
+
+        if ($plan->rollover_percent > 0 && $remainingVoice > 0) {
+            $allowedVoiceRollover = ($plan->rollover_percent / 100) * $plan->monthly_voice_tokens;
+            $allowedVoiceRollover = min($allowedVoiceRollover, $plan->monthly_voice_tokens);
+            $voiceRolloverAmount  = min($remainingVoice, $allowedVoiceRollover);
+        }
+
         $user->total_credits           = $plan->monthly_credits + $scriptRolloverAmount;
         $user->used_credits            = 0;
         $user->credits_used_this_month = 0;
@@ -330,6 +340,9 @@ class BillingService
 
         $user->total_image_tokens = $plan->monthly_image_tokens + $imageRolloverAmount;
         $user->used_image_tokens  = 0;
+
+        $user->total_voice_tokens = $plan->monthly_voice_tokens + $voiceRolloverAmount;
+        $user->used_voice_tokens  = 0;
 
         $user->last_rollover_at = now();
         $user->save();
