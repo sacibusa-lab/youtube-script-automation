@@ -62,10 +62,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/scenes/{scene}/generate-voice', [ProjectController::class, 'generateSceneVoice'])->name('projects.scenes.generate-voice');
     Route::post('/projects/{project}/bulk-generate-voice', [ProjectController::class, 'bulkGenerateVoices'])->name('projects.bulk-generate-voice');
 
-    // VOICE LABORATORY (Public Access)
     Route::get('/voice-generation', [\App\Http\Controllers\VoiceGenerationController::class, 'index'])->name('voice-generation.index');
     Route::post('/voice-generation/generate', [\App\Http\Controllers\VoiceGenerationController::class, 'generate'])->name('voice-generation.generate');
     Route::post('/voice-generation/bulk-generate', [\App\Http\Controllers\VoiceGenerationController::class, 'bulkGenerate'])->name('voice-generation.bulk-generate');
+    Route::get('/voice-generation/check-status', [\App\Http\Controllers\VoiceGenerationController::class, 'checkStatus'])->name('voice-generation.check-status');
 
     // Character Library
     Route::resource('characters', \App\Http\Controllers\CharacterController::class);

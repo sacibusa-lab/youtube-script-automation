@@ -129,6 +129,12 @@
                             <div class="flex-1 space-y-4">
                                 <div class="flex items-center gap-3">
                                     <span class="text-[10px] font-black text-purple-600 uppercase tracking-[0.3em]" x-text="'Scene ' + scene.scene_number"></span>
+                                    <template x-if="scene.is_generating">
+                                        <div class="flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full">
+                                            <span class="w-1.5 h-1.5 bg-purple-500 rounded-full animate-ping"></span>
+                                            <span class="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest">Synthesizing...</span>
+                                        </div>
+                                    </template>
                                     <div class="h-px flex-1 bg-zinc-100 dark:bg-zinc-800"></div>
                                 </div>
                                 <p class="text-base font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed" x-text="scene.narration_text"></p>
@@ -151,7 +157,13 @@
                                 isGenerating: false,
                                 isPreviewing: false,
                                 async generate(full = true) {
-                                    if(full) this.isGenerating = true; else this.isPreviewing = true;
+                                    if(full) {
+                                        this.isGenerating = true;
+                                        scene.is_generating = true;
+                                    } else {
+                                        this.isPreviewing = true;
+                                    }
+
                                     try {
                                         const res = await fetch('{{ route('voice-generation.generate') }}', {
                                             method: 'POST',
@@ -170,20 +182,26 @@
                                         });
                                         const data = await res.json();
                                         if (data.success) {
-                                            if(full) scene.audio_path = data.audio_path;
-                                            this.$dispatch('notify', { detail: { message: full ? 'Full Voice Synthesized!' : 'Preview Ready!', type: 'success' } });
-                                            if(!full && data.audio_url) {
-                                                let audio = new Audio(data.audio_url);
-                                                audio.play();
+                                            if(full) {
+                                                this.$dispatch('notify', { detail: { message: 'Synthesis Queued!', type: 'info' } });
+                                                // Call the parent's pollStatus
+                                                this.$root.__x.$data.pollStatus(scene.id);
+                                            } else {
+                                                this.$dispatch('notify', { detail: { message: 'Preview Ready!', type: 'success' } });
+                                                if(data.audio_url) {
+                                                    let audio = new Audio(data.audio_url);
+                                                    audio.play();
+                                                }
                                             }
                                             if (data.tokens_remaining !== undefined) {
-                                                this.$root.__x.getTree().data.tokenBalance = data.tokens_remaining;
+                                                this.$root.__x.$data.tokenBalance = data.tokens_remaining;
                                             }
                                         } else {
                                             throw new Error(data.message);
                                         }
                                     } catch (e) {
                                         this.$dispatch('notify', { detail: { message: e.message, type: 'error' } });
+                                        if(full) scene.is_generating = false;
                                     } finally {
                                         this.isGenerating = false;
                                         this.isPreviewing = false;
@@ -313,6 +331,28 @@
                     this.selectedChapter = chapter;
                 },
 
+                async pollStatus(sceneId) {
+                    const scene = this.selectedChapter?.scenes.find(s => s.id === sceneId);
+                    if (!scene) return;
+
+                    try {
+                        const res = await fetch(`{{ route('voice-generation.check-status') }}?scene_id=${sceneId}`);
+                        const data = await res.json();
+
+                        if (data.status === 'completed') {
+                            scene.audio_path = data.audio_path;
+                            scene.is_generating = false;
+                            this.$dispatch('notify', { detail: { message: 'Synthesis Complete!', type: 'success' } });
+                        } else {
+                            // Still pending, poll again in 3 seconds
+                            setTimeout(() => this.pollStatus(sceneId), 3000);
+                        }
+                    } catch (e) {
+                        console.error("Polling error", e);
+                        scene.is_generating = false;
+                    }
+                },
+
                 async bulkGenerate() {
                     if (!this.selectedChapter) return;
                     this.isBulkGenerating = true;
@@ -333,21 +373,19 @@
                         });
                         const data = await res.json();
                         if (data.success) {
-                            // Update local scenes with new audio paths
-                            data.results.forEach(result => {
-                                const scene = this.selectedChapter.scenes.find(s => s.id === result.scene_id);
-                                if (scene) {
-                                    scene.audio_path = result.audio_path;
-                                    scene.voice_id = this.globalSettings.voice_id;
-                                }
+                            // Mark all as generating
+                            this.selectedChapter.scenes.forEach(scene => {
+                                scene.is_generating = true;
+                                this.pollStatus(scene.id);
                             });
+
                             if (data.tokens_remaining !== undefined) {
                                 this.tokenBalance = data.tokens_remaining;
                                 window.dispatchEvent(new CustomEvent('tokens-updated', { 
                                     detail: { voice_tokens: data.tokens_remaining } 
                                 }));
                             }
-                            this.$dispatch('notify', { detail: { message: `Successfully generated ${data.succeeded} voices!`, type: 'success' } });
+                            this.$dispatch('notify', { detail: { message: `Queued ${this.selectedChapter.scenes.length} voices for background processing.`, type: 'info' } });
                         } else {
                             throw new Error(data.message || 'Bulk generation failed');
                         }

@@ -26,9 +26,9 @@ class VoiceGenerationController extends Controller
     }
 
     /**
-     * Generate or regenerate voice for a specific scene with fine-tune parameters.
+     * Generate or regenerate voice for a specific scene (Queued).
      */
-    public function generate(Request $request, VoiceOverService $voiceService)
+    public function generate(Request $request)
     {
         $request->validate([
             'scene_id' => 'required|exists:scenes,id',
@@ -39,7 +39,6 @@ class VoiceGenerationController extends Controller
 
         $scene = Scene::with('chapter.video')->findOrFail($request->scene_id);
         
-        // Authorization Check
         if ($scene->chapter->video->user_id !== Auth::id()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
@@ -54,35 +53,59 @@ class VoiceGenerationController extends Controller
             ], 402);
         }
 
+        // Deduct Tokens upfront (Standard practice for background jobs to prevent abuse)
+        if (!$user->isAdmin()) {
+            $user->deductCredits($cost, 'voice');
+        }
+
         $options = [
             'speed' => (float) $request->input('speed', 1.0),
             'volume' => (float) $request->input('volume', 1.0),
         ];
 
-        $audioPath = $voiceService->generate($scene, $request->voice_id, $options);
+        // Dispatch Job
+        \App\Jobs\GenerateVoiceOverJob::dispatch(
+            $scene->id,
+            $request->voice_id,
+            $options,
+            $user->id
+        );
 
-        if ($audioPath) {
-            // Deduct Tokens
-            if (!$user->isAdmin()) {
-                $user->deductCredits($cost, 'voice');
-            }
+        return response()->json([
+            'success' => true,
+            'message' => 'Voice generation started in background',
+            'scene_id' => $scene->id,
+            'tokens_remaining' => $user->fresh()->voiceTokensBalance()
+        ]);
+    }
 
+    /**
+     * Check the status of a voice generation.
+     */
+    public function checkStatus(Request $request)
+    {
+        $request->validate(['scene_id' => 'required|exists:scenes,id']);
+        $scene = Scene::findOrFail($request->scene_id);
+
+        if ($scene->audio_path) {
             return response()->json([
                 'success' => true,
-                'audio_url' => asset('storage/' . $audioPath),
-                'audio_path' => $audioPath,
-                'scene_id' => $scene->id,
-                'voice_id' => $request->voice_id,
-                'tokens_remaining' => $user->fresh()->voiceTokensBalance()
+                'status' => 'completed',
+                'audio_url' => $scene->audio_url,
+                'audio_path' => $scene->audio_path
             ]);
         }
 
-        return response()->json(['success' => false, 'message' => 'Local bridge execution failed'], 500);
+        return response()->json([
+            'success' => true,
+            'status' => 'pending'
+        ]);
     }
+
     /**
-     * Bulk generate voices for all scenes in a chapter.
+     * Bulk generate voices for all scenes in a chapter (Queued).
      */
-    public function bulkGenerate(Request $request, VoiceOverService $voiceService)
+    public function bulkGenerate(Request $request)
     {
         $request->validate([
             'chapter_id' => 'required|exists:chapters,id',
@@ -93,7 +116,6 @@ class VoiceGenerationController extends Controller
 
         $chapter = Chapter::with(['video', 'scenes'])->findOrFail($request->chapter_id);
         
-        // Authorization Check
         if ($chapter->video->user_id !== Auth::id()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
@@ -106,8 +128,13 @@ class VoiceGenerationController extends Controller
         if (!$user->isAdmin() && !$user->hasCredits($totalCost, 'voice')) {
             return response()->json([
                 'success' => false, 
-                'message' => "Insufficient voice tokens for bulk generation. Required: {$totalCost}, Balance: " . $user->voiceTokensBalance()
+                'message' => "Insufficient voice tokens. Required: {$totalCost}, Balance: " . $user->voiceTokensBalance()
             ], 402);
+        }
+
+        // Deduct Tokens
+        if (!$user->isAdmin()) {
+            $user->deductCredits($totalCost, 'voice');
         }
 
         $options = [
@@ -115,31 +142,18 @@ class VoiceGenerationController extends Controller
             'volume' => (float) $request->input('volume', 1.0),
         ];
 
-        $results = [];
-        $total = count($chapter->scenes);
-        $successCount = 0;
-
         foreach ($chapter->scenes as $scene) {
-            $audioPath = $voiceService->generate($scene, $request->voice_id, $options);
-            if ($audioPath) {
-                $successCount++;
-                $results[] = [
-                    'scene_id' => $scene->id,
-                    'audio_url' => asset('storage/' . $audioPath),
-                    'audio_path' => $audioPath
-                ];
-            }
-        }
-
-        if ($successCount > 0 && !$user->isAdmin()) {
-            $user->deductCredits($successCount * $costPerScene, 'voice');
+            \App\Jobs\GenerateVoiceOverJob::dispatch(
+                $scene->id,
+                $request->voice_id,
+                $options,
+                $user->id
+            );
         }
 
         return response()->json([
-            'success' => $successCount > 0,
-            'processed' => $total,
-            'succeeded' => $successCount,
-            'results' => $results,
+            'success' => true,
+            'message' => "Dispatched synthesis for {$totalScenes} scenes",
             'tokens_remaining' => $user->fresh()->voiceTokensBalance()
         ]);
     }

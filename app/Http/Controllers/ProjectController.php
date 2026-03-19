@@ -810,58 +810,56 @@ class ProjectController extends Controller
     }
 
     /**
-     * Generate high-quality AI voice-over for a scene using Kokoro TTS.
+     * Generate high-quality AI voice-over for a scene (Queued).
      */
-    public function generateSceneVoice(Request $request, Video $project, \App\Models\Scene $scene, \App\Services\Media\VoiceOverService $voiceService)
+    public function generateSceneVoice(Request $request, Video $project, \App\Models\Scene $scene)
     {
         if ($project->user_id !== Auth::id() || $scene->video_id !== $project->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $audioPath = $voiceService->generate($scene, $request->voice_id);
+        // Dispatch Job
+        \App\Jobs\GenerateVoiceOverJob::dispatch(
+            $scene->id,
+            $request->voice_id,
+            ['speed' => (float)$request->input('speed', 1.0), 'volume' => (float)$request->input('volume', 1.0)],
+            Auth::id()
+        );
 
-        if ($audioPath) {
-            return response()->json([
-                'success' => true,
-                'audio_url' => asset('storage/' . $audioPath),
-                'audio_path' => $audioPath,
-                'voice_id' => $scene->voice_id
-            ]);
-        }
-
-        return response()->json(['success' => false, 'message' => 'Voice generation failed'], 500);
+        return response()->json([
+            'success' => true,
+            'message' => 'Synthesis started in background',
+            'scene_id' => $scene->id
+        ]);
     }
 
     /**
-     * Bulk generate AI voice-overs for all scenes in a video project.
+     * Bulk generate AI voice-overs for all scenes in a video project (Queued).
      */
-    public function bulkGenerateVoices(Request $request, Video $project, \App\Services\Media\VoiceOverService $voiceService)
+    public function bulkGenerateVoices(Request $request, Video $project)
     {
         if ($project->user_id !== Auth::id()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $project->load('chapters.scenes');
-        $voiceId = $request->voice_id;
-        $results = [];
+        $count = 0;
 
         foreach ($project->chapters as $chapter) {
             foreach ($chapter->scenes as $scene) {
-                $audioPath = $voiceService->generate($scene, $voiceId);
-                if ($audioPath) {
-                    $results[] = [
-                        'scene_id' => $scene->id,
-                        'audio_url' => asset('storage/' . $audioPath),
-                        'voice_id' => $scene->voice_id
-                    ];
-                }
+                \App\Jobs\GenerateVoiceOverJob::dispatch(
+                    $scene->id,
+                    $request->voice_id,
+                    ['speed' => (float)$request->input('speed', 1.0), 'volume' => (float)$request->input('volume', 1.0)],
+                    Auth::id()
+                );
+                $count++;
             }
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Bulk voice generation completed',
-            'results' => $results
+            'message' => "Dispatched synthesis for {$count} scenes"
         ]);
     }
 }
