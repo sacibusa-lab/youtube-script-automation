@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $siteSettings['platform_name'] ?? config('app.name', 'StoryBee') }} | Cinematic AI Video Automation</title>
+    <title>{{ $siteSettings['platform_name'] ?? config('app.name', 'ViralStories AI') }} | Cinematic AI Video Automation</title>
 
     @if(isset($siteSettings['favicon']))
         <link rel="icon" type="image/png" href="{{ Storage::url($siteSettings['favicon']) }}">
@@ -157,17 +157,16 @@
                         <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg>
                     </div>
                 @endif
-                <span class="text-xl font-outfit font-black tracking-tighter uppercase whitespace-nowrap">{{ $siteSettings['platform_name'] ?? 'STORYBEE' }}</span>
+                <span class="text-xl font-outfit font-black tracking-tighter uppercase whitespace-nowrap">{{ $siteSettings['platform_name'] ?? 'ViralStories AI' }}</span>
             </div>
 
             <div class="hidden md:flex items-center gap-10">
                 <a href="#pipeline" class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">The Pipeline</a>
                 <a href="#features" class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Features</a>
-                <a href="#demos" class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Demos</a>
                 <a href="#pricing" class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Pricing</a>
                 <a href="#faq" class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">FAQ</a>
-                <a href="{{ route('login') }}" class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Access</a>
-                <a href="#pricing" class="btn-premium px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-widest">Join Beta</a>
+                <a href="{{ route('login') }}" class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Login</a>
+                <a href="#pricing" class="btn-premium px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-widest">Get Started</a>
             </div>
 
             <button class="md:hidden text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
@@ -178,7 +177,7 @@
     <section class="pt-48 pb-32 px-6">
         <div class="max-w-7xl mx-auto text-center">
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 mb-10 animate-reveal">
-                <span class="text-[10px] font-black text-white bg-white/10 px-4 py-2 rounded-full border border-white/20 uppercase tracking-[0.3em] backdrop-blur-md">StoryBee: Next-Gen Script & Voice Ecosystem Active</span>
+                <span class="text-[10px] font-black text-white bg-white/10 px-4 py-2 rounded-full border border-white/20 uppercase tracking-[0.3em] backdrop-blur-md">ViralStories AI: Next-Gen Script & Voice Ecosystem</span>
             </div>
             
             <h1 class="text-6xl md:text-8xl font-black font-outfit uppercase tracking-tighter leading-[0.85] mt-8 mb-6 relative z-10">
@@ -198,25 +197,6 @@
                     View Pipeline
                 </a>
             </div>
-
-            <!-- Command Center Mockup -->
-            <div class="mt-32 relative px-4 animate-reveal">
-                <div class="glass p-3 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-                    <div class="scanline"></div>
-                    <div class="absolute inset-0 bg-gradient-to-b from-teal-500/5 to-transparent"></div>
-                    <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070" 
-                         alt="System Terminal Interface" 
-                         class="rounded-[2.5rem] w-full grayscale contrast-125 opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000 border border-white/5">
-                    
-                    <!-- Floating Data Nodes -->
-                    <div class="absolute bottom-12 left-12 glass px-6 py-4 rounded-2xl hidden lg:block border border-teal-500/20">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-3 rounded-full bg-teal-500 animate-pulse"></div>
-                            <span class="text-[10px] font-black uppercase tracking-widest text-teal-500">Processing Node Alpha</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -226,9 +206,7 @@
             <p class="text-[10px] font-black text-zinc-600 uppercase tracking-[0.5em] text-center mb-10">Optimized for</p>
             <div class="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
                 <span class="text-3xl font-black italic tracking-tighter">YouTube</span>
-                <span class="text-3xl font-black italic tracking-tighter">TikTok</span>
-                <span class="text-3xl font-black italic tracking-tighter">Snapchat</span>
-                <span class="text-3xl font-black italic tracking-tighter">Meta AI</span>
+                <span class="text-3xl font-black italic tracking-tighter">Facebook</span>
             </div>
         </div>
     </section>
@@ -293,7 +271,7 @@
                     <span class="text-[10px] font-black text-amber-500 uppercase tracking-[0.4em]">Consistency Engine</span>
                     <h2 class="text-5xl font-outfit font-black mt-4 leading-tight">No more character <br> hallucinations.</h2>
                     <p class="text-zinc-500 mt-8 text-lg font-medium leading-relaxed">
-                        Unlike generic video tools, StoryBee uses a proprietary "Character Roster" system. Define your protagonist once, and they stay consistent across every scene. No drift, no errors.
+                        Unlike generic video tools, ViralStories AI uses a proprietary "Character Roster" system. Define your protagonist once, and they stay consistent across every scene. No drift, no errors.
                     </p>
                     <div class="mt-12 space-y-6">
                         <div class="flex items-center gap-4">
@@ -317,75 +295,6 @@
                     <div class="absolute -top-10 -right-10 glass px-8 py-6 rounded-3xl border border-white/10 hidden xl:block animate-bounce shadow-2xl">
                         <div class="text-3xl font-black font-outfit">100%</div>
                         <div class="text-[10px] font-black uppercase text-zinc-500 tracking-widest mt-1">Consistency Match</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Recent Outputs / Live Demos Section -->
-    <section id="demos" class="py-40 px-6 border-t border-white/5">
-        <div class="max-w-[100rem] mx-auto">
-            <div class="text-center mb-24 animate-reveal">
-                <span class="text-[10px] font-black text-teal-500 uppercase tracking-[0.4em]">Live Feeds</span>
-                <h2 class="text-5xl font-outfit font-black mt-4">System Outputs.</h2>
-                <p class="text-zinc-500 mt-4 text-lg max-w-2xl mx-auto">Unedited, 100% AI-generated sequences straight from our production clusters.</p>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-reveal">
-                <!-- Demo Item 1 -->
-                <div class="glass rounded-3xl overflow-hidden group relative aspect-[9/16]">
-                    <img src="https://images.unsplash.com/photo-1618331835717-814cb2c8b0bc?auto=format&fit=crop&q=80&w=800" alt="Demo Output" class="absolute inset-0 w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-left">
-                        <span class="text-[9px] font-black text-white bg-teal-500/20 px-3 py-1 rounded backdrop-blur-md uppercase tracking-widest border border-teal-500/30">Sci-Fi Short</span>
-                    </div>
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100">
-                        <div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                            <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Demo Item 2 -->
-                <div class="glass rounded-3xl overflow-hidden group relative aspect-[9/16] mt-8">
-                    <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800" alt="Demo Output" class="absolute inset-0 w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-left">
-                        <span class="text-[9px] font-black text-white bg-rose-500/20 px-3 py-1 rounded backdrop-blur-md uppercase tracking-widest border border-rose-500/30">Nature Doc</span>
-                    </div>
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100">
-                        <div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                            <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Demo Item 3 -->
-                <div class="glass rounded-3xl overflow-hidden group relative aspect-[9/16]">
-                    <img src="https://images.unsplash.com/photo-1685356983804-62c1dc5cd1e8?auto=format&fit=crop&q=80&w=800" alt="Demo Output" class="absolute inset-0 w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-left">
-                        <span class="text-[9px] font-black text-white bg-amber-500/20 px-3 py-1 rounded backdrop-blur-md uppercase tracking-widest border border-amber-500/30">Cyberpunk Ad</span>
-                    </div>
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100">
-                        <div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                            <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Demo Item 4 -->
-                <div class="glass rounded-3xl overflow-hidden group relative aspect-[9/16] mt-8">
-                    <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=800" alt="Demo Output" class="absolute inset-0 w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-left">
-                        <span class="text-[9px] font-black text-white bg-indigo-500/20 px-3 py-1 rounded backdrop-blur-md uppercase tracking-widest border border-indigo-500/30">TikTok Reel</span>
-                    </div>
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100">
-                        <div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                            <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -420,7 +329,7 @@
             <!-- Review Card 2 -->
             <div class="glass p-8 rounded-[2rem] min-w-[350px] shadow-2xl relative">
                 <div class="text-teal-500 mb-6">★★★★★</div>
-                <p class="text-lg font-medium text-zinc-300 mb-6 leading-relaxed">"StoryBee effectively replaced our entire $4k/mo editing offshore team. The pipeline just works. Scripts in, viral 4k visuals out."</p>
+                <p class="text-lg font-medium text-zinc-300 mb-6 leading-relaxed">"ViralStories AI effectively replaced our entire $4k/mo editing offshore team. The pipeline just works. Scripts in, viral 4k visuals out."</p>
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-full bg-zinc-800 border border-white/10 overflow-hidden">
                         <img src="https://ui-avatars.com/api/?name=SJ&background=random" alt="Avatar">
@@ -542,7 +451,7 @@
                     </button>
                     <div x-show="active === 2" x-collapse x-cloak class="faq-answer">
                         <div class="px-8 pb-6 text-zinc-400 leading-relaxed font-medium">
-                            You do. You retain 100% full commercial rights and ownership of all scripts, images, audio, and compiled videos generated through your Axelit StoryBee account. You are free to monetize on YouTube, TikTok, or use them for client agency work without attribution.
+                            You do. You retain 100% full commercial rights and ownership of all scripts, images, audio, and compiled videos generated through your Axelit ViralStories AI account. You are free to monetize on YouTube, TikTok, or use them for client agency work without attribution.
                         </div>
                     </div>
                 </div>
@@ -590,7 +499,7 @@
                                 <svg class="w-4 h-4 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg>
                             </div>
                         @endif
-                        <span class="text-lg font-outfit font-black tracking-tighter uppercase whitespace-nowrap">{{ $siteSettings['platform_name'] ?? 'STORYBEE' }}</span>
+                        <span class="text-lg font-outfit font-black tracking-tighter uppercase whitespace-nowrap">{{ $siteSettings['platform_name'] ?? 'ViralStories AI' }}</span>
                     </div>
                     <p class="text-sm text-zinc-600 font-medium max-w-xs">Building the future of automated viral content through neural cinematography.</p>
                 </div>
@@ -629,6 +538,8 @@
                     </a>
                 </div>
             </div>
+            <br>
+            This site is not a part of the Facebook website or Facebook Inc. Additionally, This site is NOT endorsed by Facebook in any way. FACEBOOK is a trademark of FACEBOOK, Inc. This site is NOT endorsed by Google in any way. Google and its products and trademarks can be viewed here
         </div>
     </footer>
 </body>
