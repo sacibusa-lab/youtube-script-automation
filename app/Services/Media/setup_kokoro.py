@@ -5,7 +5,7 @@ import urllib.request
 
 def install_deps():
     print("--- Installing Python Dependencies ---")
-    deps = ["kokoro-onnx", "onnxruntime", "soundfile"]
+    deps = ["kokoro-onnx", "onnxruntime", "soundfile", "fastapi", "uvicorn", "numpy"]
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install"] + deps)
         print("Successfully installed dependencies.")

@@ -14,6 +14,7 @@ class VoiceOverService
 
     public function __construct()
     {
+        $this->baseUrl = config('services.kokoro.base_url');
         $this->defaultVoice = config('services.kokoro.default_voice', 'af_heart');
     }
 
@@ -44,14 +45,36 @@ class VoiceOverService
 
         // If file already exists, just return it (caching)
         if (Storage::disk('public')->exists($relativePath)) {
-            $scene->update([
-                'audio_path' => $relativePath,
-                'voice_id' => $voice
-            ]);
+            $scene->update(['audio_path' => $relativePath, 'voice_id' => $voice]);
             return $relativePath;
         }
 
-        // Local Python Bridge implementation
+        // 1. API Mode (Bypasses shell_exec restrictions)
+        // Only use API if the base_url is NOT the default localhost bridge placeholder
+        if (!empty($this->baseUrl) && !str_contains($this->baseUrl, 'localhost:8880')) {
+            try {
+                Log::info("Generating Kokoro voice-over via API for Scene #{$scene->id}", ['url' => $this->baseUrl]);
+                
+                $response = Http::timeout(60)->post($this->baseUrl . '/v1/audio/speech', [
+                    'model' => 'kokoro',
+                    'input' => $text,
+                    'voice' => $voice,
+                    'speed' => $speed
+                ]);
+
+                if ($response->successful()) {
+                    Storage::disk('public')->put($relativePath, $response->body());
+                    $scene->update(['audio_path' => $relativePath, 'voice_id' => $voice]);
+                    return $relativePath;
+                }
+
+                Log::error("Kokoro API Failed", ['status' => $response->status(), 'body' => $response->body()]);
+            } catch (\Exception $e) {
+                Log::error("Kokoro API Exception", ['message' => $e->getMessage()]);
+            }
+        }
+
+        // 2. Local Python Bridge (Standard local setup)
         try {
             Log::info("Generating Local Kokoro voice-over via Bridge for Scene #{$scene->id}", ['voice' => $voice]);
 
@@ -65,15 +88,11 @@ class VoiceOverService
                 mkdir(dirname($outputPath), 0777, true);
             }
 
-            // check if python or python3 is available
-            $python = "python";
-            if (PHP_OS_FAMILY !== 'Windows') {
-                $python = "python3"; // Common for Linux/Ubuntu servers
-            }
+            // Detect python binary
+            $python = (PHP_OS_FAMILY !== 'Windows') ? "python3" : "python";
 
             $result = \Illuminate\Support\Facades\Process::run([
-                $python,
-                $bridgePath,
+                $python, $bridgePath,
                 '--text', $text,
                 '--voice', $voice,
                 '--output', $outputPath,
@@ -94,35 +113,23 @@ class VoiceOverService
                 return null;
             }
 
-            // Extract JSON from output (it might contain debug info before the JSON string)
+            // Parse result
             $jsonStart = strpos($output, '{');
             $jsonEnd = strrpos($output, '}');
-            
-            if ($jsonStart !== false && $jsonEnd !== false) {
-                $jsonContent = substr($output, $jsonStart, $jsonEnd - $jsonStart + 1);
-                $data = json_decode($jsonContent, true);
-            } else {
-                $data = null;
-            }
+            $data = ($jsonStart !== false && $jsonEnd !== false) 
+                ? json_decode(substr($output, $jsonStart, $jsonEnd - $jsonStart + 1), true) 
+                : null;
 
             if ($data && isset($data['success']) && $data['success']) {
-                $scene->update([
-                    'audio_path' => $relativePath,
-                    'voice_id' => $voice
-                ]);
-
+                $scene->update(['audio_path' => $relativePath, 'voice_id' => $voice]);
                 return $relativePath;
             }
 
-            Log::error("Local Kokoro Bridge Data Processing Failed", [
-                'error' => $data['error'] ?? 'No JSON result found',
-                'raw_output' => $output
-            ]);
+            Log::error("Local Kokoro Bridge Data Processing Failed", ['raw_output' => $output]);
 
         } catch (\Error $e) {
-            // Specifically catch "Call to undefined function" which is an Error in PHP 7+
             if (str_contains($e->getMessage(), 'shell_exec') || str_contains($e->getMessage(), 'proc_open')) {
-                Log::error("CRITICAL: PHP execution functions (proc_open/shell_exec) are disabled on this server. Please enable them in php.ini to use Kokoro TTS.");
+                Log::error("CRITICAL: PHP execution (proc_open) is disabled. Please enable it in php.ini OR run the standalone Kokoro API server.");
             } else {
                 Log::error("Local Kokoro Bridge Error", ['message' => $e->getMessage()]);
             }
