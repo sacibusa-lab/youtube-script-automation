@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/select-strategy', [ProjectController::class, 'selectStrategy'])->name('projects.select-strategy');
     Route::get('/projects/{project}/export', [ProjectController::class, 'export'])->name('projects.export');
     Route::post('/projects/{project}/chapters/{chapter}/architect', [ProjectController::class, 'architectChapter'])->name('projects.chapters.architect');
+    Route::post('/projects/{project}/chapters/{chapter}/reset', [ProjectController::class, 'resetChapter'])->name('projects.chapters.reset');
     Route::post('/projects/{project}/approve-chapter/{chapter}', [ProjectController::class, 'approveChapter'])->name('projects.chapters.approve');
     Route::post('/projects/{project}/chapters/{chapter}/scenes/{scene}/generate-image', [ProjectController::class, 'generateSceneImage'])->name('projects.scenes.generate-image');
     Route::get('/projects/{project}/chapters/{chapter}/scenes/{scene}/image-status', [ProjectController::class, 'checkSceneImageStatus'])->name('projects.scenes.image-status');
@@ -57,8 +58,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/regenerate-thumbnail', [ProjectController::class, 'regenerateThumbnail'])->name('projects.regenerate-thumbnail');
     Route::post('/projects/titles/{title}/clone', [ProjectController::class, 'cloneFromConcept'])->name('projects.clone');
     Route::post('/projects/titles/{title}/generate-image', [ProjectController::class, 'generateThumbnailImage'])->name('projects.titles.generate-image');
-    Route::get('/projects/{project}/export', [ProjectController::class, 'export'])->name('projects.export');
-    Route::post('/projects/{project}/chapters/{chapter}/architect', [ProjectController::class, 'architectChapter'])->name('projects.chapters.architect');
     Route::post('/projects/{project}/assemble', [ProjectController::class, 'assembleVideo'])->name('projects.assemble');
     Route::post('/projects/{project}/scenes/{scene}/generate-voice', [ProjectController::class, 'generateSceneVoice'])->name('projects.scenes.generate-voice');
     Route::post('/projects/{project}/bulk-generate-voice', [ProjectController::class, 'bulkGenerateVoices'])->name('projects.bulk-generate-voice');

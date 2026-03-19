@@ -65,8 +65,12 @@ class GenerateChapterNarrationJob implements ShouldQueue
             
             $narrationData = $this->parseAIJSON($response->content);
 
-            $scenes = [];
-            foreach (($narrationData['scenes'] ?? []) as $sceneData) {
+            $scenesData = $narrationData['scenes'] ?? [];
+            if (empty($scenesData)) {
+                throw new \Exception("AI failed to generate scenes for Chapter {$this->chapter->chapter_number}. Raw response maybe invalid or empty.");
+            }
+
+            foreach ($scenesData as $sceneData) {
                 $scene = Scene::create([
                     'video_id' => $this->video->id,
                     'chapter_id' => $this->chapter->id,

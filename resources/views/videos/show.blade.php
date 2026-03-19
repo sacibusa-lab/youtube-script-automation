@@ -619,7 +619,7 @@
                                     </button>
                                 </div>
                             @elseif($chapter->status === 'completed')
-                                <div x-data="{ isSubmitting: false }">
+                                <div class="flex items-center gap-4" x-data="{ isSubmitting: false }">
                                     <button type="button" 
                                             @click="isSubmitting = true; if(!await submitAction('{{ route('projects.chapters.approve', [$project, $chapter]) }}', {{ $chapter->id }}, 'Authorizing')) isSubmitting = false;"
                                             :disabled="isSubmitting"
@@ -637,12 +637,36 @@
                                             </div>
                                         </template>
                                     </button>
+
+                                    @if($chapter->scenes->isEmpty())
+                                    <button type="button" 
+                                            @click="if(confirm('This chapter seems broken (0 scenes). Reset and re-architect?')) { isSubmitting = true; if(!await submitAction('{{ route('projects.chapters.reset', [$project, $chapter]) }}', {{ $chapter->id }}, 'Repairing')) isSubmitting = false; }"
+                                            :disabled="isSubmitting"
+                                            class="px-3 py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase tracking-widest rounded-xl border border-rose-200 dark:border-rose-800 hover:bg-rose-600 hover:text-white transition shadow-sm flex items-center gap-2">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        <span>Repair Node</span>
+                                    </button>
+                                    @endif
                                 </div>
                             @elseif($chapter->status === 'approved')
-                                <span class="flex items-center gap-2 text-teal-500 text-[11px] font-black uppercase tracking-widest">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                    Mission Ready
-                                </span>
+                                <div class="flex items-center gap-4">
+                                    <span class="flex items-center gap-2 text-teal-500 text-[11px] font-black uppercase tracking-widest">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        Mission Ready
+                                    </span>
+                                    
+                                    @if($chapter->scenes->isEmpty())
+                                    <div x-data="{ isSubmitting: false }">
+                                        <button type="button" 
+                                                @click="if(confirm('This chapter seems broken (0 scenes). Reset and re-architect?')) { isSubmitting = true; if(!await submitAction('{{ route('projects.chapters.reset', [$project, $chapter]) }}', {{ $chapter->id }}, 'Repairing')) isSubmitting = false; }"
+                                                :disabled="isSubmitting"
+                                                class="px-3 py-1.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase tracking-widest rounded-lg border border-rose-200 dark:border-rose-800 hover:bg-rose-600 hover:text-white transition shadow-sm flex items-center gap-2">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            <span>Repair Node</span>
+                                        </button>
+                                    </div>
+                                    @endif
+                                </div>
                             @endif
                         </div>
 

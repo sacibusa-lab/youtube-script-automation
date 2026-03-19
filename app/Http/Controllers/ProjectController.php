@@ -665,6 +665,34 @@ class ProjectController extends Controller
     }
 
     /**
+     * Reset a chapter back to pending state (Admin/Repair tool).
+     */
+    public function resetChapter(\App\Models\Video $project, \App\Models\Chapter $chapter)
+    {
+        if ($project->user_id !== Auth::id() || $chapter->video_id !== $project->id) {
+            abort(403);
+        }
+
+        // Delete all scenes
+        $chapter->scenes()->delete();
+        $chapter->update(['status' => 'pending']);
+
+        // Set video back to generating_chapters if it was completed
+        if ($project->status === 'completed') {
+            $project->update(['status' => 'generating_chapters']);
+        }
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Chapter {$chapter->chapter_number} reset to pending."
+            ]);
+        }
+
+        return back()->with('success', "Chapter {$chapter->chapter_number} reset to pending.");
+    }
+
+    /**
      * Show the cinematic studio interface.
      */
     public function studio(Video $project)
