@@ -29,6 +29,23 @@ class GeneratedTitle extends Model
         'short_script' => 'array',
     ];
 
+    protected $appends = ['thumbnail_url'];
+
+    public function getThumbnailUrlAttribute($value)
+    {
+        if (!$value) return null;
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            if (str_contains($value, '/storage/')) {
+                $path = explode('/storage/', $value)[1];
+                return asset('storage/' . $path);
+            }
+            return $value;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($value);
+    }
+
     public function video()
     {
         return $this->belongsTo(Video::class);

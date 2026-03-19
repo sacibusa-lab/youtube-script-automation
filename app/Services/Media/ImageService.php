@@ -400,7 +400,7 @@ class ImageService
         $image = base64_decode($base64);
         $filename = $folder . '/' . uniqid() . '.png';
         \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $image);
-        return \Illuminate\Support\Facades\Storage::url($filename);
+        return $filename;
     }
 
     /**
@@ -421,12 +421,12 @@ class ImageService
                 
                 $filename = $folder . '/' . uniqid() . '.' . $extension;
                 \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $contents);
-                return \Illuminate\Support\Facades\Storage::url($filename);
+                return $filename;
             }
         } catch (\Exception $e) {
             Log::error("Failed to localize remote image from {$url}: " . $e->getMessage());
         }
         
-        return $url; // Fallback to remote URL if download fails
+        return $url; // Fallback to remote URL if download fails (or null if you prefer)
     }
 }

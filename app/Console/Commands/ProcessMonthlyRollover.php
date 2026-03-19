@@ -37,6 +37,7 @@ class ProcessMonthlyRollover extends Command
                 continue;
             }
 
+            $remainingScripts = $user->total_credits - $user->used_credits;
             $remainingImages  = $user->total_image_tokens - $user->used_image_tokens;
             $remainingVoice   = $user->total_voice_tokens - $user->used_voice_tokens;
             $rollover         = $user->plan->rollover_percent;

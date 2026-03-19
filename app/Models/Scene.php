@@ -23,7 +23,7 @@ class Scene extends Model
         'voice_id',
     ];
 
-    protected $appends = ['audio_url'];
+    protected $appends = ['audio_url', 'image_url'];
 
     protected $casts = [
         'character_references' => 'array',
@@ -33,6 +33,25 @@ class Scene extends Model
     public function getAudioUrlAttribute()
     {
         return $this->audio_path ? asset('storage/' . $this->audio_path) : null;
+    }
+
+    public function getImageUrlAttribute($value)
+    {
+        if (!$value) return null;
+
+        // If it's already an absolute URL (legacy), sanitize it
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            // Strip old domains if they exist, but keep remote provider URLs (e.g. S3/Cloudinary)
+            // If it's a local storage URL from a different domain, we want to try to make it relative
+            if (str_contains($value, '/storage/')) {
+                $path = explode('/storage/', $value)[1];
+                return asset('storage/' . $path);
+            }
+            return $value;
+        }
+
+        // If it's a relative path, use Storage::url()
+        return \Illuminate\Support\Facades\Storage::url($value);
     }
 
     public function video()
