@@ -1,5 +1,8 @@
 <x-app-layout>
-    <div x-data="voiceStudio()" class="max-w-[1600px] mx-auto">
+    <div x-data="voiceStudio()" 
+         @start-polling.window="pollStatus($event.detail.sceneId)"
+         @tokens-updated.window="tokenBalance = $event.detail.voice_tokens"
+         class="max-w-[1600px] mx-auto">
         <div class="flex flex-col lg:flex-row gap-8">
             
             {{-- LEFT COLUMN: STEP 1 & 2 --}}
@@ -184,8 +187,8 @@
                                         if (data.success) {
                                             if(full) {
                                                 this.$dispatch('notify', { detail: { message: 'Synthesis Queued!', type: 'info' } });
-                                                // Call the parent's pollStatus
-                                                this.$root.__x.$data.pollStatus(scene.id);
+                                                // Trigger global polling via event
+                                                this.$dispatch('start-polling', { sceneId: scene.id });
                                             } else {
                                                 this.$dispatch('notify', { detail: { message: 'Preview Ready!', type: 'success' } });
                                                 if(data.audio_url) {
@@ -194,7 +197,7 @@
                                                 }
                                             }
                                             if (data.tokens_remaining !== undefined) {
-                                                this.$root.__x.$data.tokenBalance = data.tokens_remaining;
+                                                this.$dispatch('tokens-updated', { detail: { voice_tokens: data.tokens_remaining } });
                                             }
                                         } else {
                                             throw new Error(data.message);
@@ -331,25 +334,31 @@
                     this.selectedChapter = chapter;
                 },
 
-                async pollStatus(sceneId) {
-                    const scene = this.selectedChapter?.scenes.find(s => s.id === sceneId);
-                    if (!scene) return;
+                async pollStatus(sceneId, chapterId = null) {
+                    // Record which chapter this poll belongs to
+                    if (!chapterId) chapterId = this.selectedChapter?.id;
+                    
+                    const scene = this.selectedChapter?.id === chapterId 
+                        ? this.selectedChapter?.scenes.find(s => s.id === sceneId) 
+                        : null;
 
                     try {
                         const res = await fetch(`{{ route('voice-generation.check-status') }}?scene_id=${sceneId}`);
                         const data = await res.json();
 
                         if (data.status === 'completed') {
-                            scene.audio_path = data.audio_path;
-                            scene.is_generating = false;
+                            if (scene) {
+                                scene.audio_path = data.audio_path;
+                                scene.is_generating = false;
+                            }
                             this.$dispatch('notify', { detail: { message: 'Synthesis Complete!', type: 'success' } });
                         } else {
                             // Still pending, poll again in 3 seconds
-                            setTimeout(() => this.pollStatus(sceneId), 3000);
+                            setTimeout(() => this.pollStatus(sceneId, chapterId), 3000);
                         }
                     } catch (e) {
                         console.error("Polling error", e);
-                        scene.is_generating = false;
+                        if (scene) scene.is_generating = false;
                     }
                 },
 
