@@ -55,7 +55,12 @@ class VoiceOverService
             try {
                 Log::info("Generating Kokoro voice-over via API for Scene #{$scene->id}", ['url' => $this->baseUrl]);
                 
-                $response = Http::timeout(60)->post($this->baseUrl . '/v1/audio/speech', [
+                $url = rtrim($this->baseUrl, '/');
+                if (!str_ends_with($url, '/v1')) {
+                    $url .= '/v1';
+                }
+                
+                $response = Http::timeout(60)->post($url . '/audio/speech', [
                     'model' => 'kokoro',
                     'input' => $text,
                     'voice' => $voice,
@@ -88,8 +93,15 @@ class VoiceOverService
                 mkdir(dirname($outputPath), 0777, true);
             }
 
-            // Detect python binary
-            $python = (PHP_OS_FAMILY !== 'Windows') ? "python3" : "python";
+            // Detect python binary (Prioritize local venv)
+            $python = base_path('venv/bin/python');
+            if (PHP_OS_FAMILY === 'Windows') {
+                $python = base_path('venv/Scripts/python.exe');
+            }
+
+            if (!file_exists($python)) {
+                $python = (PHP_OS_FAMILY !== 'Windows') ? "python3" : "python";
+            }
 
             $result = \Illuminate\Support\Facades\Process::run([
                 $python, $bridgePath,
