@@ -16,12 +16,20 @@ class VoiceGenerationController extends Controller
      */
     public function index()
     {
-        $projects = Video::where('user_id', Auth::id())
-            ->whereIn('status', ['completed', 'assembling', 'assembly_failed'])
-            ->with(['chapters.scenes', 'generatedTitles' => function($q) {
+        $user = Auth::user();
+        $query = Video::query();
+            
+        // Admins see everything, regular users only see their own active/completed projects
+        if (!$user->isAdmin()) {
+            $query->where('user_id', $user->id)
+                  ->whereIn('status', ['completed', 'assembling', 'assembly_failed', 'waiting_for_chapters', 'waiting_for_launch', 'generating_chapters', 'approved', 'architecting_chapters']);
+        }
+
+        $projects = $query->with(['chapters.scenes', 'scenes', 'generatedTitles' => function($q) {
                 $q->where('is_selected', true);
             }])
             ->latest()
+            ->limit(100)
             ->get();
 
         return view('voice-generation.index', compact('projects'));
@@ -41,7 +49,7 @@ class VoiceGenerationController extends Controller
 
         $scene = Scene::with('chapter.video')->findOrFail($request->scene_id);
         
-        if ($scene->chapter->video->user_id !== Auth::id()) {
+        if ($scene->chapter->video->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -96,7 +104,7 @@ class VoiceGenerationController extends Controller
 
         $title = \App\Models\GeneratedTitle::with('video')->findOrFail($request->title_id);
         
-        if ($title->video->user_id !== Auth::id()) {
+        if ($title->video->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -189,7 +197,7 @@ class VoiceGenerationController extends Controller
 
         $chapter = Chapter::with(['video', 'scenes'])->findOrFail($request->chapter_id);
         
-        if ($chapter->video->user_id !== Auth::id()) {
+        if ($chapter->video->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

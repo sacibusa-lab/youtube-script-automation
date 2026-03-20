@@ -226,6 +226,10 @@ class ProjectController extends Controller
 
         $generatedTitle = GeneratedTitle::findOrFail($validated['title_id']);
 
+        // Mark this title as selected, and others as not
+        GeneratedTitle::where('video_id', $project->id)->update(['is_selected' => false]);
+        $generatedTitle->update(['is_selected' => true]);
+
         // Check if we already have the narrative details (Instant Flow)
         if (!empty($generatedTitle->mega_hook) && !empty($generatedTitle->thumbnail_concept)) {
             $project->update([
@@ -598,6 +602,7 @@ class ProjectController extends Controller
         $newTitle = $title->replicate();
         $newTitle->video_id = $newProject->id;
         $newTitle->is_saved = false;
+        $newTitle->is_selected = true;
         $newTitle->save();
 
         if (!$hasDetails) {
