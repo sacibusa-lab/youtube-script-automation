@@ -18,7 +18,8 @@ class GenerateVoiceOverJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 300;
 
-    protected int $sceneId;
+    protected int $modelId;
+    protected string $modelType;
     protected ?string $voiceId;
     protected array $options;
     protected int $userId;
@@ -26,9 +27,10 @@ class GenerateVoiceOverJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(int $sceneId, ?string $voiceId = null, array $options = [], int $userId)
+    public function __construct(int $modelId, ?string $voiceId = null, array $options = [], int $userId, string $modelType = \App\Models\Scene::class)
     {
-        $this->sceneId = $sceneId;
+        $this->modelId = $modelId;
+        $this->modelType = $modelType;
         $this->voiceId = $voiceId;
         $this->options = $options;
         $this->userId = $userId;
@@ -39,28 +41,30 @@ class GenerateVoiceOverJob implements ShouldQueue
      */
     public function handle(VoiceOverService $voiceService): void
     {
-        $scene = Scene::find($this->sceneId);
+        $model = $this->modelType::find($this->modelId);
         $user = User::find($this->userId);
 
-        if (!$scene || !$user) {
+        if (!$model || !$user) {
             return;
         }
 
-        Log::info("Queued Voice Generation starting for Scene #{$scene->id}");
+        $typeLabel = $model instanceof \App\Models\Scene ? "Scene" : "Hook";
+        Log::info("Queued Voice Generation starting for {$typeLabel} #{$model->id}");
 
         try {
-            $audioPath = $voiceService->generate($scene, $this->voiceId, $this->options);
+            // Deduct tokens here if not already handled by controller
+            // For now, controllers handle deduction before dispatching to keep UI in sync
+            
+            $audioPath = $voiceService->generate($model, $this->voiceId, $this->options);
 
             if ($audioPath) {
-                // Tokens are usually deducted when the job is DISPATCHED to prevent double-charging on retries
-                // or after SUCCESS. Here we assume deduction happened or will happen.
-                Log::info("Queued Voice Generation SUCCESS for Scene #{$scene->id}");
+                Log::info("Queued Voice Generation SUCCESS for {$typeLabel} #{$model->id}");
             } else {
-                Log::error("Queued Voice Generation FAILED for Scene #{$scene->id} (No audio path returned)");
+                Log::error("Queued Voice Generation FAILED for {$typeLabel} #{$model->id} (No audio path returned)");
                 $this->fail(new \Exception("Voice synthesis returned empty path"));
             }
         } catch (\Exception $e) {
-            Log::error("Queued Voice Generation Exception", ['message' => $e->getMessage()]);
+            Log::error("Queued Voice Generation Exception for {$typeLabel} #{$model->id}", ['message' => $e->getMessage()]);
             $this->fail($e);
         }
     }

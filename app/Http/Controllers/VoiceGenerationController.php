@@ -18,7 +18,9 @@ class VoiceGenerationController extends Controller
     {
         $projects = Video::where('user_id', Auth::id())
             ->whereIn('status', ['completed', 'assembling', 'assembly_failed'])
-            ->with(['chapters.scenes'])
+            ->with(['chapters.scenes', 'generatedTitles' => function($q) {
+                $q->where('is_selected', true);
+            }])
             ->latest()
             ->get();
 
@@ -68,7 +70,8 @@ class VoiceGenerationController extends Controller
             $scene->id,
             $request->voice_id,
             $options,
-            $user->id
+            $user->id,
+            \App\Models\Scene::class
         );
 
         return response()->json([
@@ -80,20 +83,90 @@ class VoiceGenerationController extends Controller
     }
 
     /**
+     * Generate or regenerate voice for a Megahook (Queued).
+     */
+    public function generateMegahook(Request $request)
+    {
+        $request->validate([
+            'title_id' => 'required|exists:generated_titles,id',
+            'voice_id' => 'nullable|string',
+            'speed' => 'nullable|numeric|between:0.5,2.0',
+            'volume' => 'nullable|numeric|between:0.0,2.0',
+        ]);
+
+        $title = \App\Models\GeneratedTitle::with('video')->findOrFail($request->title_id);
+        
+        if ($title->video->user_id !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $user = Auth::user();
+        $cost = $user->plan->voice_token_cost ?? 50;
+
+        if (!$user->isAdmin() && !$user->hasCredits($cost, 'voice')) {
+            return response()->json([
+                'success' => false, 
+                'message' => "Insufficient voice tokens. Required: {$cost}, Balance: " . $user->voiceTokensBalance()
+            ], 402);
+        }
+
+        // Deduct Tokens
+        if (!$user->isAdmin()) {
+            $user->deductCredits($cost, 'voice');
+        }
+
+        $options = [
+            'speed' => (float) $request->input('speed', 1.0),
+            'volume' => (float) $request->input('volume', 1.0),
+        ];
+
+        // Dispatch Job for GeneratedTitle
+        \App\Jobs\GenerateVoiceOverJob::dispatch(
+            $title->id,
+            $request->voice_id,
+            $options,
+            $user->id,
+            \App\Models\GeneratedTitle::class
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Megahook synthesis started in background',
+            'title_id' => $title->id,
+            'tokens_remaining' => $user->fresh()->voiceTokensBalance()
+        ]);
+    }
+
+    /**
      * Check the status of a voice generation.
      */
     public function checkStatus(Request $request)
     {
-        $request->validate(['scene_id' => 'required|exists:scenes,id']);
-        $scene = Scene::findOrFail($request->scene_id);
+        $request->validate([
+            'scene_id' => 'nullable|exists:scenes,id',
+            'title_id' => 'nullable|exists:generated_titles,id',
+        ]);
 
-        if ($scene->audio_path) {
-            return response()->json([
-                'success' => true,
-                'status' => 'completed',
-                'audio_url' => $scene->audio_url,
-                'audio_path' => $scene->audio_path
-            ]);
+        if ($request->scene_id) {
+            $scene = Scene::findOrFail($request->scene_id);
+            if ($scene->audio_path) {
+                return response()->json([
+                    'success' => true,
+                    'status' => 'completed',
+                    'audio_url' => $scene->audio_url,
+                    'audio_path' => $scene->audio_path
+                ]);
+            }
+        } elseif ($request->title_id) {
+            $title = \App\Models\GeneratedTitle::findOrFail($request->title_id);
+            if ($title->mega_hook_audio_path) {
+                return response()->json([
+                    'success' => true,
+                    'status' => 'completed',
+                    'audio_url' => $title->mega_hook_audio_url,
+                    'audio_path' => $title->mega_hook_audio_path
+                ]);
+            }
         }
 
         return response()->json([
@@ -147,7 +220,8 @@ class VoiceGenerationController extends Controller
                 $scene->id,
                 $request->voice_id,
                 $options,
-                $user->id
+                $user->id,
+                \App\Models\Scene::class
             );
         }
 

@@ -30,8 +30,21 @@
                         <h3 class="text-xs font-black text-purple-600 uppercase tracking-[0.2em]">Step 2 — Select Chapter</h3>
                     </div>
                     <div class="max-h-[300px] overflow-y-auto p-2 space-y-1">
+                        {{-- PROLOGUE: MEGA HOOK --}}
+                        <template x-if="selectedProject?.mega_hook">
+                            <button @click="selectedChapter = null; isHookSelected = true"
+                                    :class="isHookSelected ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/20' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:text-zinc-400 text-zinc-600'"
+                                    class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center justify-between group">
+                                <div>
+                                    <span class="font-bold text-sm">Prologue</span>
+                                    <p class="text-[10px] opacity-60 font-medium truncate max-w-[180px]">The Mega-Hook (Intro)</p>
+                                </div>
+                                <span class="text-[9px] font-black uppercase opacity-60">High Impact</span>
+                            </button>
+                        </template>
+
                         <template x-for="chapter in selectedProject?.chapters" :key="chapter.id">
-                            <button @click="selectChapter(chapter)"
+                            <button @click="selectChapter(chapter); isHookSelected = false"
                                     :class="selectedChapter?.id === chapter.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:text-zinc-400 text-zinc-600'"
                                     class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center justify-between group">
                                 <div>
@@ -281,6 +294,54 @@
 
                         </div>
                     </template>
+                {{-- MEGA HOOK VIEW --}}
+                <div x-show="isHookSelected" x-transition.opacity class="space-y-6">
+                    <div class="bg-gradient-to-br from-rose-50 to-orange-50 dark:from-zinc-900 dark:to-rose-950/30 rounded-[2.5rem] p-8 text-zinc-900 dark:text-white border border-rose-100 dark:border-rose-800/30 shadow-xl shadow-rose-500/5">
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                            <div class="space-y-2 text-center md:text-left">
+                                <div class="flex items-center justify-center md:justify-start gap-3">
+                                    <span class="px-3 py-1 bg-rose-100 dark:bg-rose-500/20 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-200 dark:border-rose-400/30 text-rose-600 dark:text-rose-400">Winning Vector</span>
+                                    <h2 class="text-xl font-black">The Mega-Hook</h2>
+                                </div>
+                                <p class="text-zinc-500 dark:text-rose-200/60 text-sm font-medium">The critical first 30 seconds of your viral video</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 flex flex-col xl:flex-row gap-8 transition-all hover:border-rose-500/30 group">
+                        {{-- Hook Info --}}
+                        <div class="flex-1 space-y-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-black text-rose-600 uppercase tracking-[0.3em]">Narration Script</span>
+                                <template x-if="selectedProject?.mega_hook?.is_generating">
+                                    <div class="flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping"></span>
+                                        <span class="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Synthesizing...</span>
+                                    </div>
+                                </template>
+                                <div class="h-px flex-1 bg-zinc-100 dark:bg-zinc-800"></div>
+                            </div>
+                            <p class="text-base font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed italic" x-text="selectedProject?.mega_hook?.text"></p>
+                            
+                            {{-- Player Preview --}}
+                            <div x-show="selectedProject?.mega_hook?.audio_path" class="pt-4 flex items-center gap-4">
+                                <audio :src="'/storage/' + selectedProject?.mega_hook?.audio_path" controls class="h-8 max-w-sm"></audio>
+                                <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Master Intro File</span>
+                            </div>
+                        </div>
+
+                        {{-- Action Buttons --}}
+                        <div class="xl:w-48 flex flex-col gap-3">
+                            <button @click="generateVoice(selectedProject.mega_hook.id, true)" :disabled="selectedProject?.mega_hook?.is_generating" class="w-full bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                <svg x-show="!selectedProject?.mega_hook?.is_generating" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                <svg x-show="selectedProject?.mega_hook?.is_generating" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span x-text="selectedProject?.mega_hook?.audio_path ? 'Regenerate' : 'Generate Voice'"></span>
+                            </button>
+                            <div class="text-center">
+                                <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest" x-text="tokenCost + ' Tokens'"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- EMPTY STATE --}}
@@ -304,6 +365,7 @@
                 search: '',
                 selectedProject: null,
                 selectedChapter: null,
+                isHookSelected: false,
                 isBulkGenerating: false,
                 globalSettings: {
                     voice_id: 'af_heart',
@@ -326,7 +388,20 @@
                         this.selectedChapter = null;
                         return;
                     }
-                    this.selectedProject = this.projects.find(p => p.id == projectId);
+                    const rawProject = this.projects.find(p => p.id == projectId);
+                    if (rawProject) {
+                        // Extract the selected mega_hook data if available
+                        const selectedTitle = rawProject.generated_titles?.[0] || null;
+                        this.selectedProject = {
+                            ...rawProject,
+                            mega_hook: selectedTitle ? {
+                                id: selectedTitle.id,
+                                text: selectedTitle.mega_hook,
+                                audio_path: selectedTitle.mega_hook_audio_path,
+                                is_generating: false
+                            } : null
+                        };
+                    }
                     this.selectedChapter = null;
                 },
 
@@ -334,33 +409,44 @@
                     this.selectedChapter = chapter;
                 },
 
-                async pollStatus(sceneId, chapterId = null) {
+                async pollStatus(modelId, chapterId = null, isHook = false) {
                     // Record which chapter this poll belongs to
-                    if (!chapterId) chapterId = this.selectedChapter?.id;
+                    if (!chapterId && !isHook) chapterId = this.selectedChapter?.id;
                     
-                    const scene = this.selectedChapter?.id === chapterId 
-                        ? this.selectedChapter?.scenes.find(s => s.id === sceneId) 
-                        : null;
+                    let model = null;
+                    if (isHook) {
+                        model = this.selectedProject?.mega_hook;
+                    } else {
+                        model = this.selectedChapter?.id === chapterId 
+                            ? this.selectedChapter?.scenes.find(s => s.id === modelId) 
+                            : null;
+                    }
 
                     try {
-                        const res = await fetch(`{{ route('voice-generation.check-status') }}?scene_id=${sceneId}`);
+                        const query = isHook ? `title_id=${modelId}` : `scene_id=${modelId}`;
+                        const res = await fetch(`{{ route('voice-generation.check-status') }}?${query}`);
                         const data = await res.json();
 
                         if (data.status === 'completed') {
-                            if (scene) {
-                                scene.audio_path = data.audio_path;
-                                scene.is_generating = false;
+                            if (model) {
+                                if (isHook) {
+                                    model.mega_hook_audio_path = data.audio_path;
+                                } else {
+                                    model.audio_path = data.audio_path;
+                                }
+                                model.is_generating = false;
                             }
                             this.$dispatch('notify', { detail: { message: 'Synthesis Complete!', type: 'success' } });
                         } else {
                             // Still pending, poll again in 3 seconds
-                            setTimeout(() => this.pollStatus(sceneId, chapterId), 3000);
+                            setTimeout(() => this.pollStatus(modelId, chapterId, isHook), 3000);
                         }
                     } catch (e) {
                         console.error("Polling error", e);
-                        if (scene) scene.is_generating = false;
+                        if (model) model.is_generating = false;
                     }
                 },
+@start-polling.window="pollStatus($event.detail.sceneId || $event.detail.titleId, null, !!$event.detail.titleId)"
 
                 async bulkGenerate() {
                     if (!this.selectedChapter) return;
@@ -402,6 +488,47 @@
                         this.$dispatch('notify', { detail: { message: e.message, type: 'error' } });
                     } finally {
                         this.isBulkGenerating = false;
+                    }
+                },
+
+                async generateVoice(id, isHook = false) {
+                    const model = isHook ? this.selectedProject.mega_hook : this.selectedChapter.scenes.find(s => s.id === id);
+                    if (!model) return;
+
+                    model.is_generating = true;
+
+                    try {
+                        const url = isHook ? '{{ route('voice-generation.megahook') }}' : '{{ route('voice-generation.generate') }}';
+                        const body = isHook ? { title_id: id } : { scene_id: id };
+                        
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                                body: JSON.stringify({
+                                ...body,
+                                voice_id: this.globalSettings.voice_id,
+                                speed: this.globalSettings.speed,
+                                volume: this.globalSettings.volume
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (data.success) {
+                            if (data.tokens_remaining !== undefined) {
+                                this.tokenBalance = data.tokens_remaining;
+                            }
+                            this.pollStatus(id, null, isHook);
+                            this.$dispatch('notify', { detail: { message: 'Generation started...', type: 'info' } });
+                        } else {
+                            throw new Error(data.message || 'Generation failed');
+                        }
+                    } catch (e) {
+                        model.is_generating = false;
+                        this.$dispatch('notify', { detail: { message: e.message, type: 'error' } });
                     }
                 }
             }

@@ -16,6 +16,8 @@ class GeneratedTitle extends Model
         'visual_prompt_data',
         'thumbnail_concept',
         'mega_hook',
+        'mega_hook_audio_path',
+        'mega_hook_voice_id',
         'short_script',
         'thumbnail_url',
         'thumbnail_status',
@@ -29,7 +31,12 @@ class GeneratedTitle extends Model
         'short_script' => 'array',
     ];
 
-    protected $appends = ['thumbnail_url'];
+    protected $appends = ['thumbnail_url', 'mega_hook_audio_url'];
+
+    public function getMegaHookAudioUrlAttribute()
+    {
+        return $this->mega_hook_audio_path ? \Illuminate\Support\Facades\Storage::url($this->mega_hook_audio_path) : null;
+    }
 
     public function getThumbnailUrlAttribute($value)
     {

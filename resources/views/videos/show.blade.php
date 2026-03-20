@@ -55,6 +55,9 @@
                 'thumbnail_concept' => $t->thumbnail_concept,
                 'thumbnail_url' => $t->thumbnail_url,
                 'thumbnail_status' => $t->thumbnail_status,
+                'mega_hook_audio_url' => $t->mega_hook_audio_url,
+                'mega_hook_audio_path' => $t->mega_hook_audio_path,
+                'is_generating_hook' => false,
                 'short_script' => $t->short_script
             ])),
             selectedStrategyIndex: @js($initialIndex ?? $project->generatedTitles->search(fn($t) => $t->title === $project->selected_title) ?: 0),
@@ -120,6 +123,56 @@
                         console.error('Polling failed', e);
                     }
                 }, 5000);
+            },
+            pollMegaHookStatus(titleId) {
+                const interval = setInterval(async () => {
+                    try {
+                        const res = await fetch(`{{ route('voice-generation.check-status') }}?title_id=${titleId}`);
+                        const data = await res.json();
+                        
+                        if (data.status === 'completed') {
+                            clearInterval(interval);
+                            const strategyIndex = this.strategies.findIndex(s => s.id === titleId);
+                            if (strategyIndex !== -1) {
+                                this.strategies[strategyIndex].mega_hook_audio_url = data.audio_url;
+                                this.strategies[strategyIndex].mega_hook_audio_path = data.audio_path;
+                                this.strategies[strategyIndex].is_generating_hook = false;
+                                window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Mega-Hook Narration Ready!', type: 'success' } }));
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Megahook polling failed', e);
+                    }
+                }, 3000);
+            },
+            async generateMegaHookVoice() {
+                if (this.currentStrategy.is_generating_hook) return;
+                this.currentStrategy.is_generating_hook = true;
+                
+                try {
+                    const res = await fetch('{{ route('voice-generation.megahook') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title_id: this.currentStrategy.id,
+                            voice_id: 'af_heart', // Default for intro
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Narration Engine Engaged...', type: 'info' } }));
+                        this.pollMegaHookStatus(this.currentStrategy.id);
+                    } else {
+                        throw new Error(data.message || 'Generation failed');
+                    }
+                } catch (e) {
+                    this.currentStrategy.is_generating_hook = false;
+                    window.dispatchEvent(new CustomEvent('notify', { detail: { message: e.message, type: 'error' } }));
+                }
             },
             async selectTitle() {
                 if (this.isLaunching) return;
@@ -379,20 +432,41 @@
                     <!-- Mega Hook Card -->
                     <div class="bg-zinc-950/40 backdrop-blur-xl border border-white/5 rounded-[32px] p-8 space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-red-500">The Mega-Hook (First 30s)</span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-red-500">The Mega-Hook (First 30s)</span>
+                                <template x-if="currentStrategy.is_generating_hook">
+                                    <div class="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full">
+                                        <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                                        <span class="text-[8px] font-black text-red-500 uppercase tracking-widest italic">Synthesizing Voice...</span>
+                                    </div>
+                                </template>
+                            </div>
                             <div class="flex gap-4">
                                 <button @click="copyToClipboard(currentMegaHook, 'Mega-Hook')" class="text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 01-2-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                                     Copy
                                 </button>
+                                <button @click="generateMegaHookVoice" :disabled="currentStrategy.is_generating_hook" class="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 flex items-center gap-1 disabled:opacity-50">
+                                    <svg x-show="!currentStrategy.is_generating_hook" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                    <svg x-show="currentStrategy.is_generating_hook" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span x-text="currentStrategy.mega_hook_audio_url ? 'Regenerate Voice' : 'Narrate Hook'"></span>
+                                </button>
                                 <button @click="regenerateHook" :disabled="isRegeneratingHook" class="text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white flex items-center gap-1 disabled:opacity-50">
                                     <svg x-show="!isRegeneratingHook" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                     <svg x-show="isRegeneratingHook" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    Regenerate
+                                    Regen Script
                                 </button>
                             </div>
                         </div>
                         <p class="text-zinc-300 italic leading-relaxed text-sm" x-text="currentMegaHook"></p>
+                        
+                        {{-- Audio Player for Hook --}}
+                        <template x-if="currentStrategy.mega_hook_audio_url">
+                            <div class="pt-4 flex items-center gap-4 border-t border-white/5">
+                                <audio :src="currentStrategy.mega_hook_audio_url" controls class="h-8 max-w-xs invert opacity-70 hover:opacity-100 transition"></audio>
+                                <span class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Master Hook Audio</span>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Actions -->

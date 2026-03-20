@@ -19,16 +19,25 @@ class VoiceOverService
     }
 
     /**
-     * Generate speech for a scene.
+     * Generate speech for a model (Scene or GeneratedTitle).
      *
-     * @param Scene $scene
+     * @param object $model
      * @param string|null $voiceId
      * @param array $options Fine-tune options (speed, volume, etc.)
      * @return string|null The relative path to the generated audio file.
      */
-    public function generate(Scene $scene, ?string $voiceId = null, array $options = []): ?string
+    public function generate(object $model, ?string $voiceId = null, array $options = []): ?string
     {
-        $text = $scene->narration_text;
+        $isScene = $model instanceof \App\Models\Scene;
+        $isTitle = $model instanceof \App\Models\GeneratedTitle;
+
+        if (!$isScene && !$isTitle) {
+            Log::error("VoiceOverService: Unsupported model type " . get_class($model));
+            return null;
+        }
+
+        $text = $isScene ? $model->narration_text : $model->mega_hook;
+        
         if (empty($text)) {
             return null;
         }
@@ -39,21 +48,25 @@ class VoiceOverService
         
         // Generate a unique filename based on content hash, voice and options
         $hash = md5($text . $voice . $speed . $volume);
-        $fileName = "scene_{$scene->id}_{$hash}.mp3";
-        $folder = "audio/scenes";
+        $prefix = $isScene ? 'scene' : 'hook';
+        $fileName = "{$prefix}_{$model->id}_{$hash}.mp3";
+        $folder = $isScene ? "audio/scenes" : "audio/hooks";
         $relativePath = "{$folder}/{$fileName}";
+
+        $updatePayload = $isScene 
+            ? ['audio_path' => $relativePath, 'voice_id' => $voice]
+            : ['mega_hook_audio_path' => $relativePath, 'mega_hook_voice_id' => $voice];
 
         // If file already exists, just return it (caching)
         if (Storage::disk('public')->exists($relativePath)) {
-            $scene->update(['audio_path' => $relativePath, 'voice_id' => $voice]);
+            $model->update($updatePayload);
             return $relativePath;
         }
 
         // 1. API Mode (Bypasses shell_exec restrictions)
-        // Only use API if the base_url is explicitly configured in .env
         if (!empty($this->baseUrl)) {
             try {
-                Log::info("Generating Kokoro voice-over via API for Scene #{$scene->id}", ['url' => $this->baseUrl]);
+                Log::info("Generating Kokoro voice-over via API for " . ($isScene ? "Scene" : "Hook") . " #{$model->id}", ['url' => $this->baseUrl]);
                 
                 $url = rtrim($this->baseUrl, '/');
                 if (!str_ends_with($url, '/v1')) {
@@ -69,7 +82,7 @@ class VoiceOverService
 
                 if ($response->successful()) {
                     Storage::disk('public')->put($relativePath, $response->body());
-                    $scene->update(['audio_path' => $relativePath, 'voice_id' => $voice]);
+                    $model->update($updatePayload);
                     return $relativePath;
                 }
 
@@ -81,7 +94,7 @@ class VoiceOverService
 
         // 2. Local Python Bridge (Standard local setup)
         try {
-            Log::info("Generating Local Kokoro voice-over via Bridge for Scene #{$scene->id}", ['voice' => $voice]);
+            Log::info("Generating Local Kokoro voice-over via Bridge for " . ($isScene ? "Scene" : "Hook") . " #{$model->id}", ['voice' => $voice]);
 
             $bridgePath = base_path('app/Services/Media/kokoro_bridge.py');
             $modelPath = storage_path('app/models/kokoro/kokoro-v0_19.onnx');
@@ -133,7 +146,7 @@ class VoiceOverService
                 : null;
 
             if ($data && isset($data['success']) && $data['success']) {
-                $scene->update(['audio_path' => $relativePath, 'voice_id' => $voice]);
+                $model->update($updatePayload);
                 return $relativePath;
             }
 
