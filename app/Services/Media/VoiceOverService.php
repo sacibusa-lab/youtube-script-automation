@@ -124,26 +124,57 @@ class VoiceOverService
                 $python = (PHP_OS_FAMILY !== 'Windows') ? "python3" : "python";
             }
 
-            $result = \Illuminate\Support\Facades\Process::run([
-                $python, $bridgePath,
-                '--text', $text,
-                '--voice', $voice,
-                '--output', $outputPath,
-                '--model', $modelPath,
-                '--voices_bin', $voicesPath,
-                '--speed', (string)$speed,
-                '--volume', (string)$volume
-            ]);
-
-            $output = $result->output();
+            $output = '';
             
-            if (!$result->successful()) {
-                Log::error("Local Kokoro Bridge Failed", [
-                    'error' => $result->errorOutput(),
-                    'exit_code' => $result->exitCode(),
-                    'output' => $output
+            if (function_exists('proc_open')) {
+                $result = \Illuminate\Support\Facades\Process::run([
+                    $python, $bridgePath,
+                    '--text', $text,
+                    '--voice', $voice,
+                    '--output', $outputPath,
+                    '--model', $modelPath,
+                    '--voices_bin', $voicesPath,
+                    '--speed', (string)$speed,
+                    '--volume', (string)$volume
                 ]);
-                return null;
+
+                $output = $result->output();
+                
+                if (!$result->successful()) {
+                    Log::error("Local Kokoro Bridge Failed (Process)", [
+                        'error' => $result->errorOutput(),
+                        'exit_code' => $result->exitCode(),
+                        'output' => $output
+                    ]);
+                    return null;
+                }
+            } else {
+                // Fallback to exec if proc_open is disabled (e.g. shared hosting)
+                $cmd = sprintf('"%s" "%s" --text %s --voice %s --output %s --model %s --voices_bin %s --speed %s --volume %s',
+                    $python,
+                    $bridgePath,
+                    escapeshellarg($text),
+                    escapeshellarg($voice),
+                    escapeshellarg($outputPath),
+                    escapeshellarg($modelPath),
+                    escapeshellarg($voicesPath),
+                    escapeshellarg((string)$speed),
+                    escapeshellarg((string)$volume)
+                );
+                
+                $execOutput = [];
+                $exitCode = -1;
+                exec($cmd . ' 2>&1', $execOutput, $exitCode);
+                $output = implode("\n", $execOutput);
+                
+                if ($exitCode !== 0) {
+                    Log::error("Local Kokoro Bridge Failed (exec)", [
+                        'exit_code' => $exitCode,
+                        'output' => $output,
+                        'command' => $cmd
+                    ]);
+                    return null;
+                }
             }
 
             // Parse result
@@ -161,8 +192,8 @@ class VoiceOverService
             Log::error("Local Kokoro Bridge Data Processing Failed", ['raw_output' => $output]);
 
         } catch (\Error $e) {
-            if (str_contains($e->getMessage(), 'shell_exec') || str_contains($e->getMessage(), 'proc_open')) {
-                Log::error("CRITICAL: PHP execution (proc_open) is disabled. Please enable it in php.ini OR run the standalone Kokoro API server.");
+            if (str_contains($e->getMessage(), 'shell_exec') || str_contains($e->getMessage(), 'proc_open') || str_contains($e->getMessage(), 'exec')) {
+                Log::error("CRITICAL: PHP execution (proc_open/exec) is disabled. Please enable exec() in php.ini OR run the standalone Kokoro API server.");
             } else {
                 Log::error("Local Kokoro Bridge Error", ['message' => $e->getMessage()]);
             }
