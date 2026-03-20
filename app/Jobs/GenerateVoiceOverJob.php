@@ -18,11 +18,11 @@ class GenerateVoiceOverJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 300;
 
-    protected int $modelId;
-    protected string $modelType;
-    protected ?string $voiceId;
-    protected array $options;
-    protected int $userId;
+    protected int $modelId = 0;
+    protected string $modelType = \App\Models\Scene::class;
+    protected ?string $voiceId = null;
+    protected array $options = [];
+    protected int $userId = 0;
 
     /**
      * Create a new job instance.

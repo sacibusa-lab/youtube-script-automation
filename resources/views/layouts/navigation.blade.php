@@ -20,6 +20,14 @@
                         {{ __('Characters') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('voice-generation.index')" :active="request()->routeIs('voice-generation.*')">
+                        {{ __('Voice Lab') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('story-voices.index')" :active="request()->routeIs('story-voices.*')">
+                        {{ __('Story Voices') }}
+                    </x-nav-link>
+
                     
                     @if(Auth::user()->isAdmin())
                     <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
@@ -134,6 +142,14 @@
 
             <x-responsive-nav-link :href="route('characters.index')" :active="request()->routeIs('characters.*')">
                 {{ __('Characters') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('voice-generation.index')" :active="request()->routeIs('voice-generation.*')">
+                {{ __('Voice Lab') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('story-voices.index')" :active="request()->routeIs('story-voices.*')">
+                {{ __('Story Voices') }}
             </x-responsive-nav-link>
 
             

@@ -4,6 +4,7 @@ use App\Http\Controllers\ApiGatewayController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VoiceGenerationController;
+use App\Http\Controllers\StoryVoiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
@@ -69,6 +70,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/voice-generation/megahook', [VoiceGenerationController::class, 'generateMegahook'])->name('voice-generation.megahook');
     Route::get('/voice-generation/check-status', [VoiceGenerationController::class, 'checkStatus'])->name('voice-generation.check-status');
 
+    // Story-Specific Voice Studio
+    Route::get('/story-voices', [StoryVoiceController::class, 'index'])->name('story-voices.index');
+    Route::post('/story-voices/generate', [StoryVoiceController::class, 'generate'])->name('story-voices.generate');
+    Route::post('/story-voices/bulk-generate', [StoryVoiceController::class, 'bulkGenerate'])->name('story-voices.bulk-generate');
+    Route::post('/story-voices/megahook', [StoryVoiceController::class, 'generateMegahook'])->name('story-voices.megahook');
+    Route::get('/story-voices/check-status', [StoryVoiceController::class, 'checkStatus'])->name('story-voices.check-status');
+
+
     // Character Library
     Route::resource('characters', \App\Http\Controllers\CharacterController::class);
     Route::get('/api/characters', [\App\Http\Controllers\CharacterController::class, 'apiList'])->name('characters.api-list');
@@ -128,7 +137,8 @@ require __DIR__.'/auth.php';
 
 // ── Fallback Route for serving Storage Files Locally (bypasses Windows 403 errors) ────
 Route::get('/storage/{path}', function (string $path) {
-    $filePath = storage_path('app/public/' . $path);
+    $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+    $filePath = storage_path('app/public' . DIRECTORY_SEPARATOR . $path);
     if (!file_exists($filePath)) {
         abort(404);
     }

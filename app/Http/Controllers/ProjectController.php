@@ -819,9 +819,20 @@ class ProjectController extends Controller
      */
     public function generateSceneVoice(Request $request, Video $project, \App\Models\Scene $scene)
     {
-        if ($project->user_id !== Auth::id() || $scene->video_id !== $project->id) {
+        $user = Auth::user();
+        if ($project->user_id !== $user->id || $scene->video_id !== $project->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
+
+        $cost = max(1, mb_strlen($scene->content ?? ''));
+
+        // Check Credits
+        if (!$user->isAdmin() && !$user->hasCredits($cost, 'voice')) {
+            return response()->json(['success' => false, 'message' => "Insufficient voice tokens. Required: {$cost}"], 402);
+        }
+
+        // Deduct Tokens
+        $user->deductCredits($cost, 'voice');
 
         // Dispatch Job
         \App\Jobs\GenerateVoiceOverJob::dispatch(
@@ -834,7 +845,8 @@ class ProjectController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Synthesis started in background',
-            'scene_id' => $scene->id
+            'scene_id' => $scene->id,
+            'tokens_remaining' => $user->fresh()->voiceTokensBalance()
         ]);
     }
 
@@ -848,8 +860,20 @@ class ProjectController extends Controller
         }
 
         $project->load('chapters.scenes');
-        $count = 0;
+        $totalChars = $project->chapters->sum(function($chapter) {
+            return $chapter->scenes->sum(fn($scene) => mb_strlen($scene->content ?? ''));
+        });
+        $cost = max(1, $totalChars);
+        
+        $user = Auth::user();
+        if (!$user->isAdmin() && !$user->hasCredits($cost, 'voice')) {
+            return response()->json(['success' => false, 'message' => "Insufficient voice tokens. Required: {$cost}"], 402);
+        }
 
+        // Deduct Tokens
+        $user->deductCredits($cost, 'voice');
+
+        // Dispatch Jobs
         foreach ($project->chapters as $chapter) {
             foreach ($chapter->scenes as $scene) {
                 \App\Jobs\GenerateVoiceOverJob::dispatch(
@@ -858,13 +882,13 @@ class ProjectController extends Controller
                     ['speed' => (float)$request->input('speed', 1.0), 'volume' => (float)$request->input('volume', 1.0)],
                     Auth::id()
                 );
-                $count++;
             }
         }
 
         return response()->json([
             'success' => true,
-            'message' => "Dispatched synthesis for {$count} scenes"
+            'message' => "Dispatched synthesis for {$cost} tokens worth of text",
+            'tokens_remaining' => $user->fresh()->voiceTokensBalance()
         ]);
     }
 }

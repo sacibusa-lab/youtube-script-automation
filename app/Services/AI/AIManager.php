@@ -200,8 +200,9 @@ class AIManager
                     );
                 } else {
                     // No reservation (legacy / direct call) — deduct directly
-                    $user->deductCredits($response->inputTokens + $response->outputTokens, 'script');
-                    Log::info("[BILLING] Direct deduction for User {$userId} (no reservation). Tokens: " . ($response->inputTokens + $response->outputTokens));
+                    $tokenType = ($jobType === 'visual_prompts' || $jobType === 'thumbnail_engine' || str_contains($jobType, 'image')) ? 'image' : 'script';
+                    $user->deductCredits($response->inputTokens + $response->outputTokens, $tokenType);
+                    Log::info("[BILLING] Direct deduction for User {$userId} (no reservation). Type: {$tokenType}, Tokens: " . ($response->inputTokens + $response->outputTokens));
                 }
             }
 
